@@ -99,16 +99,18 @@ genEra -q [query_sequences.fasta] -t [query_taxid] -b [path/to/nr] -d [path/to/t
 ```console
 awk -F'"' -v OFS='' '{ for (i=2; i<=NF; i+=2) gsub(",", "", $i) } 1' ncbi_lineages_[date].csv | awk -F "," '{ print $1","$8","$7","$6"," ... }' > custom_table.csv
 ```
-### The user can also incorporate three other input files, which are optional but can potentially improve the final age assignation:
+### The user can also incorporate four other inputs, which are optional but can potentially improve the final age assignation:
 
--a: Tab-delimited table with additional proteins to be included in the analysis. This option is particularly useful if the user wants to include proteins from species that are absent from the nr database, such as newly annotated genomes or transcriptomes. It can also help fill the gaps of phylostrata that would otherwise be collapsed due to lack of available genomes in the database. It is important to note that the query proteins should be included in this table if they are absent from the nr, as it is the case for any newly sequenced genome or transcriptome. Importantly, each protein in this custom dataset should have unique identifiers, otherwise genEra will not work properly during the taxonomic assignation of the Diamond hits. The table format consists of the location of one protein FASTA file for each additional species in the first column and the NCBI taxonomy ID of that species in the second column:
+-a: Tab-delimited table with additional proteins to be included in the analysis. This option is particularly useful if the user wants to include proteins from species that are absent from the nr database, such as newly annotated genomes or transcriptomes. It can also help fill the gaps of phylostrata that would otherwise be collapsed due to lack of available genomes in the database. Importantly, each protein in this custom dataset should have unique identifiers, otherwise GenEra will not work properly during the taxonomic assignation of the Diamond hits. The table format consists of the location of one protein FASTA file for each additional species in the first column and the NCBI taxonomy ID of that species in the second column:
 
 		   /path/to/species_1.fasta	taxid_1
 		   /path/to/species_2.fasta	taxid_2
 		   /path/to/species_3.fasta	taxid_3
 
--f: Table with additional genome assemblies to be searched against your query proteins with MMseqs2 in a "tblastn" fashion. This option is extremely useful to improve the detection of orphan genes, since errors in the genome annotations can always lead to the spurious detection of taxonomically-restricted genes (Basile et al., 2019). Importantly, each contig/scaffold/chromosome in this dataset should have a unique identifier (e.g., avoid having multiple “>chr1” sequences throughout your genome assemblies). The table format consists of the location of one nucleotide FASTA file for each genome/transcriptome assembly in the first column and the NCBI taxonomy ID of that species in the second column:
+-f: Table with additional nucleotide sequences (e.g., non-annotated genome assemblies) to be searched against your query proteins with MMseqs2 in a "tblastn" fashion. This option is extremely useful to improve the detection of orphan genes, since errors in the genome annotations can always lead to the spurious detection of taxonomically-restricted genes (Basile et al., 2019; Weisman et al., 2022). Importantly, each contig/scaffold/chromosome in this dataset should have a unique identifier (e.g., avoid having multiple “>chr1” sequences throughout your genome assemblies). The table format consists of the location of one nucleotide FASTA file for each genome/transcriptome assembly in the first column and the NCBI taxonomy ID of that species in the second column:
 
 		   /path/to/assembly_1.fasta	taxid_1
 		   /path/to/assembly_2.fasta	taxid_2
 		   /path/to/assembly_3.fasta	taxid_3
+
+-s: Table with pairwise evolutionary distances, calculated as substitutions/site, between several species in a phylogeny and the query species. 
