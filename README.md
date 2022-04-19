@@ -1,8 +1,22 @@
 ![GenEra](https://github.com/josuebarrera/GenEra/blob/main/logo.png)
-# Introduction
+
+Introduction
+============
+
 GenEra is an easy-to-use, low-dependency and highly customizable command-line tool that estimates the age of the earliest common ancestor of protein-coding genes though genomic phylostratigraphy (Domazet-Lošo et al., 2007). GenEra takes advantage of [DIAMOND](https://github.com/bbuchfink/diamond "DIAMOND")’s speed and sensitivity to search for homolog genes throughout the entire NR database, and combines these results with the [NCBI Taxonomy](https://www.ncbi.nlm.nih.gov/taxonomy "NCBI Taxonomy") to assign an origination date for each gene and gene family in a query species. GenEra can also incorporate protein data from external sources to enrich the analysis, it can search for proteins within nucleotide data (i.e., genome/transcriptome assemblies) using [MMseqs2](https://github.com/soedinglab/MMseqs2 "MMseqs2") to improve the classification of orphan genes, it automatically collapses phylostrata that lack genomic data for its inclusion in the analysis, and it calculates a taxonomic representativeness score to assess the reliability of assigning a gene to a specific phylostratum. Additionally, it can calculate the probability of a gene origination age to appear younger than it really is due to homology detection failure using [abSENSE](https://github.com/caraweisman/abSENSE "abSENSE").
 
-# Dependencies
+Contents
+========
+
+-   [Dependencies](#dependencies)
+-   [Installation](#installation)
+-   [Setting up the databases](#setting-up-the-databases)
+-   [Quick start for the impatient](#quick-start-for-the-impatient)
+-   [Arguments and input files](#arguments-and-input-files)
+-   [Output files](#output-files)
+
+Dependencies
+============
 
 GenEra requires the following software dependencies:
 
@@ -15,7 +29,8 @@ GenEra requires the following software dependencies:
 
 Additionally, GenEra requires a locally installed NR database for DIAMOND, as well as internet connection and access to the taxonomy dump from the NCBI.
 
-# Installation
+Installation
+============
 
 For an easy conda installation, copy and paste this in your terminal:
 
@@ -34,7 +49,8 @@ CONDABIN=$(which ncbitax2lin | sed 's/ncbitax2lin//g') && mv genEra ${CONDABIN} 
 
 Otherwise, you can install the dependencies independently and then include both genEra and Erassignation.sh to your PATH.
 
-# Setting up the databases
+Setting up the databases
+========================
 
 First, download the nr database (warning: this is a huge FASTA file):
 ```console
@@ -64,7 +80,8 @@ diamond makedb \
 ```
 You can eliminate “prot.accession2taxid”, but keep the taxdump, as GenEra will use it later on.
 
-# Quick start for the impatient
+Quick start for the impatient
+=============================
 
 The basic usage of GenEra is:
 ```console
@@ -76,7 +93,8 @@ genEra -q [query_sequences.fasta] -t [query_taxid] -b [path/to/nr] -d [path/to/t
 -a [protein_list.tsv] -f [nucleotide_list.tsv] -s [evolutionary_distances.tsv] -i [true] -n [many threads]
   ```
 
-# Arguments and input files
+Arguments and input files
+=========================
 
 ### GenEra always requires these two inputs:
 
@@ -127,4 +145,7 @@ Afterwards, the distance table should contain the species taxid in the first col
 		   species_1_taxid	distance_1
 		   species_2_taxid	distance_2
 
-__-i:__ Boolean argument to print an additional output file with the best sequence hit responsible for the oldest phylostrata assignation for each of the query genes. Established by default as "false" to prevent GenEra from taking a lot of computation time.  
+__-i:__ Boolean argument that, when true, generates an additional output file with the best sequence hit responsible for the oldest phylostrata assignation for each of the query genes. Established by default as "false" to prevent GenEra from taking a lot of computation time.
+
+Output files
+============
