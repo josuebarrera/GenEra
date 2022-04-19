@@ -126,3 +126,5 @@ Afterwards, the distance table should contain the species taxid in the first col
 		   query_sp_taxid	0
 		   species_1_taxid	distance_1
 		   species_2_taxid	distance_2
+
+__-i:__ Boolean argument to print an additional output file with the best sequence hit responsible for the oldest phylostrata assignation for each of the query genes. Established by default as "false" to prevent GenEra from taking a lot of computation time.  
