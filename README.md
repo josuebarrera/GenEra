@@ -15,6 +15,7 @@ Contents
 -   [Arguments and input files](#arguments-and-input-files)
 -   [Fine-tunning and other useful arguments](#fine-tunning-and-other-useful-arguments)
 -   [Output files](#output-files)
+-   [Citations](#citations)
 
 Dependencies
 ============
@@ -154,11 +155,17 @@ Fine-tunning and other useful arguments
 ### These arguments can be modified to suit the user's needs, but keeping the default parameters is usually fine:
 
 -  __-n__ &nbsp;&nbsp;&nbsp; Number of threads to run GenEra. This is the only parameter we HIGHLY SUGGEST to modify, in accordance to the user's needs and resources. Running GenEra is computationally expensive, so using a small amount of threads will result in long running times. By default, GenEra uses 20 threads to run, but we suggest to use as many threads as possible.
+
 -  __-l__ &nbsp;&nbsp;&nbsp; Taxonomic representativeness threshold below which a gene will be flagged as putative genome contamination or the product of a horizontal gene transfer event. The threshold is established as 30% by default, but it can be freely modified by the user. Please refer to GenEra's paper (in prep) for a detailed explanation of taxonomic representativeness. 
+
 -  __-e__ &nbsp;&nbsp;&nbsp; E-value threshold for DIAMOND and MMseqs2, in order to consider a sequence match as a homolog. This value is established as 1e-5 by default, but the user can modify it to a more relaxed or stringent threshold.
+
 -  __-o__ &nbsp;&nbsp;&nbsp; Additional options to feed DIAMOND, based on the user's preferences. This can be useful if, for example, the user wants to filter the homology results based on identity thresholds or query coverage thresholds, instead of the e-value. Users should input the additional commands in quotes, using the original arguments from DIAMOND (for example: -o "--id 30").
+
 -  __-m__ &nbsp;&nbsp;&nbsp; Minimum percentage of matches between your query sequences and another species to consider it useful for the gene age assignation. This parameter only determines whether a phylostratum will be collapsed or not during step 2 of the pipeline. The parameter is implemented so that GenEra collapses the phylostrata where all the representative species lack WGS data in the databases. By default, this threshold is empirically established as 10% of sequence matches with respect to the number of genes in the query species. For example, if the query species has 26,000 genes, and all the representative species for a given phylostratum contain less that 2,600 matches to the query proteins, then the phylostratum is "collapsed" or removed from the analysis.
+
 -  __-x__ &nbsp;&nbsp;&nbsp; Alternative path where the user would like to store the temporary files, as well as the DIAMOND/MMseqs2 results. GenEra generates HUGE temporary files (usually within the range of hundreds of Gigabytes in size), so users might have a hard time storing all these files within the working directory. Thus, the users can redirect the temporary files to a location where there is enough storage space for GenEra to run correctly. By default, the files are stored stored in a temporary directory within the working directory (tmp\_[TAXID]\_[RANDOMNUM]/), which is automatically created by GenEra.
+
 -  __-y__ &nbsp;&nbsp;&nbsp; Modify the sensitivity parameter in DIAMOND. By default, GenEra runs DIAMOND in ultra-sensitive mode to retrieve the highest ammount of homologs in a reasonable amount of time. However, super-sensitive mode can achive similar results but much faster, or the user might want to sacrifice sensitivity in exchange for faster results (please refer to Figure SX of GenEra's paper to make an informed decision while modifying this parameter). 
 
 Output files
@@ -167,15 +174,38 @@ Output files
 ### The main output files of GenEra are the following:
 
 -  __[TAXID]\_phylostrata\_assignation.tsv__ &nbsp;&nbsp;&nbsp; Tab-delimited table that contains the phylostratigraphic assignation for every gene in the query species, the phylostratum rank that ranges from 1 in the oldest phylostratum (_i.e._, conserved genes throughout all cellular organisms) to the Nth youngest phylostratum (_i.e._, putative orphans at species-level), and the taxonomic representativeness score for each phylostratigraphic assignation. This table can be pared as the input to perform evolutionary transcriptomics through [myTAI](https://github.com/drostlab/myTAI "myTAI").
+
 -  __[TAXID]\_phylostrata\_gene\_count.txt__ &nbsp;&nbsp;&nbsp; Summary file with the number of genes in the query species that could be assigned to each phylostratum.
+
 -  __[TAXID]\_founder\_events.tsv__ &nbsp;&nbsp;&nbsp; Tab-delimited table that contains the oldest phylostratigraphic assignation for each gene family (as defined by MCL clustering), with its respective phylostratum rank and with the number of genes that are contained within each gene family. These could be regarded as the putative gene-family founder events (_i.e._, the point in time where gene families are expected to have originared _de novo_ from a single ancestral gene).
+
 -  __[TAXID]\_founder\_summary.tsv__ &nbsp;&nbsp;&nbsp; Summary file with the number of putative gene-family founder events per phylostratum.
+
 -  __[TAXID]\_abSENSE\_results/Detection\_failure\_probabilities (Optional)__ &nbsp;&nbsp;&nbsp; Main output file generated by [abSENSE](https://github.com/caraweisman/abSENSE "abSENSE") when the user specified a table with pairwise evolutionary distances using __-s__. The file contains the probability of a homolog to be undetected due to fast substitution rates, rather than a _de novo_ emergence event at that point in time. The user should look at the probability values in organisms belonging to phylostrata where the gene is no longer detected. Values close to 0 support the inference of a founder event at that phylostratum, while values close to 1 suggest that the phylostratigraphic assignation of that gene may be older but cannot be traced back due to fast substitution rates. Genes labeled with "not_enough_data" are usually putative orphans with no other homologs to be able to compute detection failure probabilities. The age of these genes can also be verified using complementary approaches such as [TOGA](https://github.com/hillerlab/TOGA "TOGA") or [fagin](https://github.com/arendsee/fagin "fagin").
 
 ### Other output files that are relevant:
 
 -   __[TAXID]\_ambiguous\_phylostrata.tsv__ &nbsp;&nbsp;&nbsp; Tab-delimited table with genes that ranked low in taxonomic representativeness (by default, below 30%), which were flagged as potential contaminants in the genome or putative horizontal gene transfer events. The table gives a list of possible phylostrata to which these genes could be assigned.
+
 -   __[TAXID]\_deepest_homolog.tsv (Optional)__ &nbsp;&nbsp;&nbsp; Additional output file that is generated when __-i__ is established as true. The file contains the best sequence hit (as defined by the bitscore value) responsible for the oldest phylostrata assignation for each of the query genes. This file is useful to identify erroneous phylostratigraphic assignments due to false positive matches, and to manually evaluate genes with a low taxonomic representativeness.
+
 -   __[TAXID]\_Diamond\_results.bout__ &nbsp;&nbsp;&nbsp; Homology table generated by [DIAMOND](https://github.com/bbuchfink/diamond "DIAMOND") (and [MMseqs2](https://github.com/soedinglab/MMseqs2 "MMseqs2") when using __-f__) with all the traceable homologs for each query protein. This is an intermediate file generated in the first step of the pipeline, which can be used with the __-p__ argument, in case the user desires to resume GenEra from step 2 onwards (thus, saving a considerable amount of time). This file is usually HUGE, so it is stored by default as a temporary file within a directory made by GenEra (tmp\_[TAXID]\_[RANDOMNUM]/), but it can also be redirected to any specified location using the __-x__ argument.
+
 -   __[TAXID]\_ncbi\_lineages\_yyyy-mm-dd.csv__ &nbsp;&nbsp;&nbsp; A modified version of the lineage table generated by [NCBItax2lin](https://github.com/zyxue/ncbitax2lin "NCBItax2lin"), with the phylostrata ordered in accordance to the query species, and without the phylostrata that lack genomic data for a reliable age assignation. This is an intermediate file generated in the second step of the pipeline, which can be used with the __-c__ argument, in case the user desires to resume GenEra while skipping step 2 (thus, saving some time).
+
 -   __[TAXID]\_abSENSE\_results/[everything\_else] (Optional)__ &nbsp;&nbsp;&nbsp; Additional files generated by [abSENSE](https://github.com/caraweisman/abSENSE "abSENSE") when the user specified a table with pairwise evolutionary distances using __-s__. These files contain the bitscore predictions that were used used to calculate the homology detection failure probabilities, as well as other parameters and general information about the analysis. Please refer to the [abSENSE README](https://github.com/caraweisman/abSENSE/blob/master/README.md "abSENSE README") for more detailed information.
+
+Citations
+=========
+
+The publication describing the method implemented in GenEra:
+```console
+Barrera-Redondo, J., Lotharukpong, J.S., Drost, H.G., Coelho, S.M. (2022). Genomic phylostratigraphy reveals that gene birth events are … across the tree of life. In prep
+```
+GenEra makes use of several dependencies that should also be cited, as follows:
+```console
+Buchfink, B., Reuter, K., Drost, H.G. (2021). Sensitive protein alignments at tree-of-life scale using DIAMOND. Nature methods, 18(4), 366-368.
+Steinegger, M., Söding, J. (2017). MMseqs2 enables sensitive protein sequence searching for the analysis of massive data sets. Nature biotechnology, 35(11), 1026-1028.
+Enright, A.J., Van Dongen, S., Ouzounis, C.A. (2002). An efficient algorithm for large-scale detection of protein families. Nucleic acids research, 30(7), 1575-1584.
+Weisman, C.M., Murray, A.W., Eddy, S.R. (2020). Many, but not all, lineage-specific genes can be explained by homology detection failure. PLoS biology, 18(11), e3000862.
+```
