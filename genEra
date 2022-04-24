@@ -89,24 +89,11 @@ if [ ! "$QUERY_FASTA" ] || [ ! "$NCBITAX" ]; then
 	print_usage >&2; exit 1
 fi
 
-# Quick check to verify that the input sequences exist, whether they are gzipped or not, and whether the file is not empty or in the wrong format
+# Quick check to verify that the input sequences exist
 if [[ ! -f $QUERY_FASTA ]]; then
 	echo
 	echo "  ERROR: The query FASTA file ${QUERY_FASTA} does not exist"
 	print_usage >&2; exit 1
-fi
-
-FASTACHECK=$(file ${QUERY_FASTA} | cut -d " " -f2)
-
-if [[ ${FASTACHECK} == "symbolic" ]]; then
-	QUERY_REALPATH=$(ls -l ${QUERY_FASTA} | awk '{ print $11 }')
-	QUERY_FASTA="${QUERY_REALPATH}"
-	FASTACHECK=$(file ${QUERY_FASTA} | cut -d " " -f2)
-fi
-
-if [[ ${FASTACHECK} == "gzip" ]]; then
-	zcat < ${QUERY_FASTA} > ${TMP_PATH}/tmp_${NCBITAX}_sequences
-	QUERY_FASTA="${TMP_PATH}/tmp_${NCBITAX}_sequences"
 fi
 
 QUERYSIZE1=$(grep -c ">" ${QUERY_FASTA})
@@ -165,6 +152,21 @@ fi
 
 echo
 echo "Your temporary files will be stored in ${TMP_PATH}"
+
+# Check whether the input sequences are gzipped or not
+FASTACHECK=$(file ${QUERY_FASTA} | cut -d " " -f2)
+
+if [[ ${FASTACHECK} == "symbolic" ]]; then
+	QUERY_REALPATH=$(ls -l ${QUERY_FASTA} | awk '{ print $11 }')
+	QUERY_FASTA="${QUERY_REALPATH}"
+	FASTACHECK=$(file ${QUERY_FASTA} | cut -d " " -f2)
+fi
+
+if [[ ${FASTACHECK} == "gzip" ]]; then
+	zcat < ${QUERY_FASTA} > ${TMP_PATH}/tmp_${NCBITAX}_sequences
+	QUERY_FASTA="${TMP_PATH}/tmp_${NCBITAX}_sequences"
+fi
+
 
 #######################################################
 ###                 GenEra: STEP 1                  ###
