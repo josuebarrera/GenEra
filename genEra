@@ -96,14 +96,6 @@ if [[ ! -f $QUERY_FASTA ]]; then
 	print_usage >&2; exit 1
 fi
 
-QUERYSIZE1=$(grep -c ">" ${QUERY_FASTA})
-QUERYSIZE2=$(wc -l ${QUERY_FASTA} | cut -d" " -f1)
-if [ "$QUERYSIZE1" -lt 1 ] || [ "$QUERYSIZE2" -lt 2 ]; then
-	echo
-	echo "  ERROR: The protein sequences in ${QUERY_FASTA} are not in FASTA format, or the file is empty"
-	print_usage >&2; exit 1
-fi
-
 # Check whether the user specified the other mandarory arguments
 if [ -z "$NR_DB" ] && [ -z "$DIAMONDOUT" ]; then
         echo
@@ -167,6 +159,13 @@ if [[ ${FASTACHECK} == "gzip" ]]; then
 	QUERY_FASTA="${TMP_PATH}/tmp_${NCBITAX}_sequences"
 fi
 
+QUERYSIZE1=$(grep -c ">" ${QUERY_FASTA})
+QUERYSIZE2=$(wc -l ${QUERY_FASTA} | cut -d" " -f1)
+if [ "$QUERYSIZE1" -lt 1 ] || [ "$QUERYSIZE2" -lt 2 ]; then
+	echo
+	echo "  ERROR: The protein sequences in ${QUERY_FASTA} are not in FASTA format, or the file is empty"
+	print_usage >&2; exit 1
+fi
 
 #######################################################
 ###                 GenEra: STEP 1                  ###
