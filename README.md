@@ -38,6 +38,7 @@ For an easy [conda](https://docs.conda.io/en/latest/ "conda") installation, copy
 
 ```console
 git clone https://github.com/josuebarrera/GenEra.git && cd GenEra
+chmod +x genEra && chmod +x Erassignation.sh
 git clone https://github.com/caraweisman/abSENSE.git && mv abSENSE/Run_abSENSE.py . && chmod +x Run_abSENSE.py
 conda create -n genEra python=3.7
 conda activate genEra
