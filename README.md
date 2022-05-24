@@ -174,7 +174,7 @@ Output files
 
 ### The main output files of GenEra are the following:
 
--  __[TAXID]\_phylostrata\_assignation.tsv__ &nbsp;&nbsp;&nbsp; Tab-delimited table that contains the phylostratigraphic assignation for every gene in the query species, the phylostratum rank that ranges from 1 in the oldest phylostratum (_i.e._, conserved genes throughout all cellular organisms) to the Nth youngest phylostratum (_i.e._, putative orphans at species-level), and the taxonomic representativeness score for each phylostratigraphic assignation. This table can be pared as the input to perform evolutionary transcriptomics through [myTAI](https://github.com/drostlab/myTAI "myTAI").
+-  __[TAXID]\_phylostrata\_assignation.tsv__ &nbsp;&nbsp;&nbsp; Tab-delimited table that contains the phylostratigraphic assignation for every gene in the query species, the phylostratum rank that ranges from 1 in the oldest phylostratum (_i.e._, conserved genes throughout all cellular organisms) to the Nth youngest phylostratum (_i.e._, putative orphans at species-level), and the taxonomic representativeness score for each phylostratigraphic assignation. This table can be used as the input to perform evolutionary transcriptomics through [myTAI](https://github.com/drostlab/myTAI "myTAI").
 
 -  __[TAXID]\_phylostrata\_gene\_count.txt__ &nbsp;&nbsp;&nbsp; Summary file with the number of genes in the query species that could be assigned to each phylostratum.
 
