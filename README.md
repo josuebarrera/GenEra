@@ -201,7 +201,7 @@ Citations
 
 The publication describing the method implemented in GenEra:
 ```console
-Barrera-Redondo, J., Lotharukpong, J.S., Drost, H.G., Coelho, S.M. (2022). Ucovering gene-family founder events at tree-of-life scale using GenEra. In prep
+Barrera-Redondo, J., Lotharukpong, J.S., Drost, H.G., Coelho, S.M. (2022). Ucovering gene-family founder events at the transition to multicellularity using GenEra. In prep
 ```
 GenEra makes use of several dependencies that should also be cited, as follows:
 ```console
