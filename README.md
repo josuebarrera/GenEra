@@ -38,7 +38,7 @@ For an easy [conda](https://docs.conda.io/en/latest/ "conda") installation, copy
 
 ```console
 git clone https://github.com/josuebarrera/GenEra.git && cd GenEra
-chmod +x genEra && chmod +x Erassignment.sh
+chmod +x genEra && chmod +x Erassignment
 git clone https://github.com/caraweisman/abSENSE.git && mv abSENSE/Run_abSENSE.py . && chmod +x Run_abSENSE.py
 conda create -n genEra python=3.7
 conda activate genEra
@@ -47,10 +47,10 @@ conda install -c bioconda mcl
 pip install -U ncbitax2lin
 conda install -c conda-forge -c bioconda mmseqs2
 conda install -c anaconda scipy
-CONDABIN=$(which ncbitax2lin | sed 's/ncbitax2lin//g') && mv genEra ${CONDABIN} && mv Erassignment.sh ${CONDABIN} && mv Run_abSENSE.py ${CONDABIN}
+CONDABIN=$(which ncbitax2lin | sed 's/ncbitax2lin//g') && mv genEra ${CONDABIN} && mv Erassignment ${CONDABIN} && mv Run_abSENSE.py ${CONDABIN}
 ```
 
-Otherwise, you can install the dependencies independently and then include both genEra and Erassignment.sh to your PATH.
+Otherwise, you can install the dependencies independently and then include both genEra and Erassignment to your PATH.
 
 Setting up the databases
 ========================
