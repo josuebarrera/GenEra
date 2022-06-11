@@ -732,7 +732,7 @@ if [ $THREADS -gt 1 ]; then
 		echo -e "#qseqid\tsseqid\tevalue\tbitscore\tstaxids" > ${NCBITAX}_deepest_homolog.tsv
 	fi
 
-	# Run the mutithreaded phylostratigraphic assignment
+	# Run the multithreaded phylostratigraphic assignment
 
 	echo "--------------------------------------------------"
 	echo "Running Erassignment using ${THREADS} threads"
