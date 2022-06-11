@@ -1,0 +1,218 @@
+#!/bin/bash
+
+### Erassignment v1.0 (C) Max Planck Society for the Advancement of Science
+###
+### Code developed by Josué Barrera-Redondo <josue.barrera@tuebingen.mpg.de>
+###
+### This program is free software: you can redistribute it and/or modify
+### it under the terms of the GNU General Public License as published by
+### the Free Software Foundation, either version 3 of the License, or
+### (at your option) any later version.
+###
+### This program is distributed in the hope that it will be useful,
+### but WITHOUT ANY WARRANTY; without even the implied warranty of
+### MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+### GNU General Public License for more details.
+
+# USAGE: Erassignment [DIAMOND/BLAST results with the query sequence in the first column and the NCBI taxids in the last column] [modified "ncbi_lineages" file generated from ncbitax2lin] [taxid of query species] [percentage threshold of incomplete phylostrata] [/path/to/tmp_files] [boolean to print the deepest homolog for each gene] [oprional table with NCBI taxonomy IDs and evolutionary distances for abSENSE]
+# Example: Erassignment Diamond_results.txt ncbi_lineages_2021-10-26.csv 7227 30 /path/to/tmp true evolutionary_distances.tsv
+
+### IMPORTANT NOTE: the "ncbi_lineages" file should be arranged so that the taxid is in the first column and all the phylostrata of interest are organized from the species level all the way back to LUCA
+
+DIAMONDOUT=$1
+NCBITAX=$2
+QTAXID=$3
+THRESHOLD=$4
+TMP_PATH=$5
+PRINTOLDEST=$6
+DIVERGENCE=$7
+
+# Extract the philostrata corresponding to the query organism
+QPHYLOS=$(awk -F "," -v QTAXID="$QTAXID" '{ if ($1 == QTAXID) print $0 }' ${NCBITAX})
+
+# Extract the oldest assignable phylostratum for the query organism to limit the phylostratigraphic analysis to that level
+OLDEST=$(echo $QPHYLOS | awk -F "," '{ print $NF }')
+
+# Calculate total number of phylostrata to analyze to avoid infinite loops
+PHYLONUM=$(echo $QPHYLOS | sed "s/,/\n/g" | wc -l)
+
+# FOR loop to calculate the corresponding phylostrata for each gene
+for GENE in $(cat ${TMP_PATH}/tmp_gene_list); do
+
+	# Generate a temporary file with the DIAMOND/MMseqs2 matches for the gene that is currently in the loop
+	grep "${GENE}" ${DIAMONDOUT} > ${TMP_PATH}/tmp_${GENE}.bout
+
+	# Extract all the non-redundant taxids of the subject matches and extract their corresponding phylostrata. Limit the taxonomic search against sequences contained in the oldest phylostratum of the query organism
+	awk -v GENE="$GENE" '{ if ($1 == GENE) print $NF }' ${TMP_PATH}/tmp_${GENE}.bout | sort -u | sed '/^[[:space:]]*$/d' | awk -F "," 'FNR==NR{ a[$1]=$0;next } ($1 in a)' - ${NCBITAX} | grep "$OLDEST" > ${TMP_PATH}/tmp_phylostrata
+
+	if [ -s ${TMP_PATH}/tmp_phylostrata ]; then
+
+		# Assign a rank to the phylostrata of the query organism
+		PHYLORANK=$(echo $QPHYLOS | sed "s/,/\n/g" | tail -n +2 | wc -l)
+
+		# Calculate the total number of taxonomic comparisons for a given gene
+		TOTALTAXA=$(cat ${TMP_PATH}/tmp_phylostrata | wc -l)
+
+		# Create a counter that increases throughout each passing phylostratum
+		COUNTER=2
+
+		# Loop throughout each phylostratum of the query organism
+		IFS=$'\n'
+		for STRATUM in $(echo $QPHYLOS | sed "s/,/\n/g" | tail -n +2); do
+
+			# Evaluate whether all the taxonomic comparisons match at each phylostratum, going from species level all the way back to LUCA
+			MATCHINGTAXA=$(awk -F "," -v COUNTER="$COUNTER" -v STRATUM="$STRATUM" '{ if ($COUNTER == STRATUM) print $0 }' ${TMP_PATH}/tmp_phylostrata | wc -l)
+
+			# If it matches at the species level:
+			if [ $TOTALTAXA == $MATCHINGTAXA ] && [ $COUNTER -eq 2 ]; then
+
+				echo -e "$GENE\t$STRATUM\t$PHYLORANK\t100" >> ${QTAXID}_gene_ages.tsv
+
+				if [[ "${PRINTOLDEST}" = "true" ]]; then
+					sort -nk4 ${TMP_PATH}/tmp_${GENE}.bout | tail -1 >> ${QTAXID}_deepest_homolog.tsv
+				fi
+
+				break
+
+			# Once all the taxonomic comparisons match a certain phylostratum above the species level, check the taxonomic representativeness in the previous strata to evaluate possible HGT events (or contamination)
+			elif [ $TOTALTAXA == $MATCHINGTAXA ] && [ $COUNTER -gt 2 ]; then
+
+				# Declare a boolean variable stating that the current phylostratum is complete:
+				INCOMPLETE=false
+
+				# Calculate the number of phylostrata levels that need to be evaluated (exluding the species-level, which can't be evaluated for completeness)
+				COVEREDSTRATA=$(($COUNTER - 2))
+
+				# Create an additional counter to calculate the number of complete phylostrata
+				GOODSTRATA=0
+
+				# Create an inverted counter to go all the way back to the shallower phylostrata
+				INVERTEDCOUNTER=$(($COUNTER - 1))
+
+				# If the user specifies it, extract the earliest-diverging match with the highest bitscore
+				if [[ "${PRINTOLDEST}" = "true" ]]; then
+					TAXLEVEL=$(echo $QPHYLOS | awk -F "," -v INVERTEDCOUNTER="$INVERTEDCOUNTER" '{ print $INVERTEDCOUNTER }')
+					awk -F "," -v INVERTEDCOUNTER="$INVERTEDCOUNTER" -v TAXLEVEL="$TAXLEVEL" '{ if ($INVERTEDCOUNTER != TAXLEVEL) print $1 }' ${TMP_PATH}/tmp_phylostrata | awk 'FNR==NR{ a[$1]=$0;next } ($NF in a)' - ${TMP_PATH}/tmp_${GENE}.bout | sort -nk4 | tail -1 >> ${QTAXID}_deepest_homolog.tsv
+				fi
+
+				# Create another temporal file with the phylostrata that are to be pruned to assay completeness
+				cat ${TMP_PATH}/tmp_phylostrata > ${TMP_PATH}/tmp_sub_phylostrata
+
+				# Create an array to allocate all possible phylostrata to be assigned to the ambiguous genes
+				ARRAY=()
+
+				# while loop to calculate the completeness for each phylostratum
+				while [ $INVERTEDCOUNTER -ge 2 ]; do
+					TAXLEVEL=$(echo $QPHYLOS | awk -F "," -v INVERTEDCOUNTER="$INVERTEDCOUNTER" '{ print $INVERTEDCOUNTER }')
+					SUBTOTALTAXA=$(cat ${TMP_PATH}/tmp_sub_phylostrata | wc -l)
+					SUBMATCHINGTAXA=$(awk -F "," -v INVERTEDCOUNTER="$INVERTEDCOUNTER" -v TAXLEVEL="$TAXLEVEL" '{ if ($INVERTEDCOUNTER == TAXLEVEL) print $0 }' ${TMP_PATH}/tmp_sub_phylostrata | wc -l)
+
+					# If the phylostratum has representative taxa at that level other than that of the query organism
+					if [ $SUBTOTALTAXA -gt $SUBMATCHINGTAXA ]; then
+
+						# Prune away the taxa that do not match the taxonomic label of the query organism for that phylostratum, and mark the stratum as "complete" (i.e., with representatives outside the query organism's classification)
+						awk -F "," -v INVERTEDCOUNTER="$INVERTEDCOUNTER" -v TAXLEVEL="$TAXLEVEL" '{ if ($INVERTEDCOUNTER == TAXLEVEL) print $0 }' ${TMP_PATH}/tmp_phylostrata > ${TMP_PATH}/tmp_sub_phylostrata
+						let GOODSTRATA+=1
+
+						# If you find a complete phylostratum, but the previous one was incomplete, add it to the list of potential phylostrata for that gene and reset the completness boolean
+						if [ $INCOMPLETE ]; then
+							BACKTRACK=$(($INVERTEDCOUNTER + 1))
+							ARRAY+=$(echo $QPHYLOS | awk -F "," -v BACKTRACK="$BACKTRACK" '{ print $BACKTRACK"," }')
+							INCOMPLETE=false
+						fi
+
+					# If the strata is incomplete, then change the boolean variable
+					elif [ $SUBTOTALTAXA == $SUBMATCHINGTAXA ]; then
+						INCOMPLETE=true
+
+					fi
+
+					let INVERTEDCOUNTER-=1
+				done
+
+				rm ${TMP_PATH}/tmp_sub_phylostrata
+
+				PROPORTIONSTRATA=$((100 * $GOODSTRATA / $COVEREDSTRATA))
+
+				# If the younger phylostrata are complete enough, then assign the oldest matching phylostratum as the potential age of the gene
+				if [ $PROPORTIONSTRATA -gt $THRESHOLD ]; then
+					echo -e "$GENE\t$STRATUM\t$PHYLORANK\t$PROPORTIONSTRATA" >> ${QTAXID}_gene_ages.tsv
+
+				# Otherwise flag the gene as potential contamination or HGT event.
+				else
+					echo -e "$GENE\tPossible contamination or HGT\tNA\t$PROPORTIONSTRATA" >> ${QTAXID}_gene_ages.tsv
+
+					# Create a list of possible assignable phylostrata for these ambiguous genes
+					echo -e "$GENE\t${ARRAY[@]}" | sed 's/,$//' >> ${QTAXID}_ambiguous_phylostrata.tsv
+				fi
+
+				break
+
+			# If the search for matching phylostrata doesn't reach a consesnsus at the oldest phylostratum, then assign the gene as putatively viral (this is no longer supposed to happen, but I kept it to avoid infinite loops).
+			elif [ $PHYLONUM == $COUNTER ]; then
+				echo -e "$GENE\tERROR IN PHYLOSTRATUM ASSIGNMENT, PLEASE CHECK FOR ANY INCONSISTENCIES IN THE \"ncbi_lineages\" FILE\tNA\tNA" >> ${QTAXID}_gene_ages.tsv
+				echo -e "ERROR IN PHYLOSTRATUM ASSIGNMENT OF $GENE, PLEASE CHECK FOR ANY INCONSISTENCIES IN THE \"ncbi_lineages\" FILE"
+				break
+
+			# If there is not a complete match between the taxonomic comparisons and the phylostratum (i.e., the gene is older than that phylostratum), then go to a deeper taxonomic level and search again
+			else
+				let COUNTER+=1
+				let PHYLORANK-=1
+			fi
+
+		done
+
+	else
+
+		echo -e "$GENE\tAbsent from the DIAMOND/MMseqs2 results\tNA\tNA" >> ${QTAXID}_gene_ages.tsv
+		if [[ "${PRINTOLDEST}" = "true" ]]; then
+			echo -e "$GENE\tno_matches\tNA\tNA\tNA\tNA\tNA">> ${QTAXID}_deepest_homolog.tsv
+		fi
+	fi
+
+	rm ${TMP_PATH}/tmp_phylostrata
+
+	# If abSENSE is invoked, generate the bitscore input file
+	if [[ -f ${DIVERGENCE} ]]; then
+
+		echo -e "${GENE}" > ${TMP_PATH}/tmp_${QTAXID}_${GENE}_bitscore.tsv
+		IFS=$'\n'
+		for SPECIES in $(cat ${DIVERGENCE}); do
+
+			SP_ID=$(echo ${SPECIES} |  cut -d "	" -f1)
+
+			# Extract the bitscore from the top hit for that gene for each species in the divergence list
+			PUTATIVE_ORTHO=$(awk -v SP_ID="$SP_ID" '{ if ($NF == SP_ID) print $(NF-1) }' ${TMP_PATH}/tmp_${GENE}.bout | sort -V | tail -1)
+
+			if [[ -z ${PUTATIVE_ORTHO} ]]; then
+				echo -e "0" >> ${TMP_PATH}/tmp_${QTAXID}_${GENE}_bitscore.tsv
+			else
+				echo -e "${PUTATIVE_ORTHO}" >> ${TMP_PATH}/tmp_${QTAXID}_${GENE}_bitscore.tsv
+			fi
+		done
+
+		# Generate the bitscore input file for abSENSE
+		awk '
+		{ 
+		    for (i=1; i<=NF; i++)  {
+		        a[NR,i] = $i
+		    }
+		}
+		NF>p { p = NF }
+		END {    
+		    for(j=1; j<=p; j++) {
+		        str=a[1,j]
+		        for(i=2; i<=NR; i++){
+		            str=str" "a[i,j];
+		        }
+		        print str
+		    }
+		}' ${TMP_PATH}/tmp_${QTAXID}_${GENE}_bitscore.tsv | sed 's/ /\t/g' >> ${QTAXID}_bitscores.tsv
+
+		rm ${TMP_PATH}/tmp_${QTAXID}_${GENE}_bitscore.tsv
+
+	fi
+
+	rm ${TMP_PATH}/tmp_${GENE}.bout
+
+done
