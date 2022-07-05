@@ -209,7 +209,7 @@ Citations
 
 The publication describing the method implemented in GenEra:
 ```console
-Barrera-Redondo, J., Lotharukpong, J.S., Drost, H.G., Coelho, S.M. (2022). Uncovering gene-family founder events during major evolutionary transitions in animals, plants and fungi. In preparation
+Barrera-Redondo, J., Lotharukpong, J.S., Drost, H.G., Coelho, S.M. (2022). Uncovering gene-family founder events during major evolutionary transitions in animals, plants and fungi using GenEra. In preparation
 ```
 GenEra makes use of several dependencies that should also be cited, as follows:
 ```console
