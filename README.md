@@ -207,9 +207,9 @@ Output files
 Citations
 =========
 
-The publication describing the method implemented in GenEra:
+The preprint describing the method implemented in GenEra:
 ```console
-Barrera-Redondo, J., Lotharukpong, J.S., Drost, H.G., Coelho, S.M. (2022). Uncovering gene-family founder events during major evolutionary transitions in animals, plants and fungi using GenEra. In preparation
+Barrera-Redondo, J., Lotharukpong, J.S., Drost, H.G., Coelho, S.M. (2022). Uncovering gene-family founder events during major evolutionary transitions in animals, plants and fungi using GenEra. bioRxix: https://doi.org/10.1101/2022.07.07.498977
 ```
 GenEra makes use of several dependencies that should also be cited, as follows:
 ```console
