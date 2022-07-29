@@ -1,6 +1,6 @@
 #!/bin/bash
 
-### genEra v1.0 (C) Max Planck Society for the Advancement of Science
+### genEra v1.0.1 (C) Max Planck Society for the Advancement of Science
 ###
 ### Code developed by Josué Barrera-Redondo <josue.barrera@tuebingen.mpg.de>
 ###
@@ -82,6 +82,24 @@ if [[ -z ${MCLEXEC} ]] || [[ -z ${MCXLOADEXEC} ]] || [[ -z ${MCXDUMPEXEC} ]]; th
         exit 1
 fi
 
+# Check if DIAMOND is correctly installed and with version 2 onwards
+DIAMONDEXEC=$(which diamond)
+if [[ -z ${DIAMONDEXEC} ]]; then
+	echo
+	echo "  ERROR: Please make sure that diamond is located in your PATH"
+	echo
+	exit 1
+fi
+
+DIAMONDVERSION=$(diamond help | head -1 | cut -d' ' -f2 | cut -d. -f1 | sed 's/v//g')
+if [[ ${DIAMONDVERSION} -lt 2 ]]; then
+	echo
+	echo "  ERROR: The installed version of DIAMOND is outdated"
+	echo "  Please update DIAMOND to version 2.0.0 or higher"
+	echo
+	exit 1
+fi
+
 # Check if the mandarory arguments were used
 if [ ! "$QUERY_FASTA" ] || [ ! "$NCBITAX" ]; then
 	echo
@@ -128,6 +146,7 @@ if [[ -f ${DIVERGENCE} ]]; then
 		echo "  Exiting"
 		exit 1
 	fi
+
 fi
 
 echo "genEra v1.0 (C) Max Planck Society for the Advancement of Science"
@@ -182,30 +201,41 @@ if [ -n "$DIAMONDOUT" ]; then
 		exit 1
 	fi
 
-	echo
-	echo "DIAMOND/MMSEQS2 OUTPUT ALREADY GENERATED. SKIPPING STEP 1"
-	echo
-	echo "We're just going to quickly match the query genes against themselves for later on (step 3)"
+	# Check that the pre-generated DIAMOND file is not empty
+	if [ -s ${DIAMONDOUT} ]; then
 
-	# Generate DIAMOND database for self-match
-	diamond makedb \
-	 --in ${QUERY_FASTA} \
-	 --db ${TMP_PATH}/tmp_selfmatch_db --quiet
+		echo
+		echo "DIAMOND/MMSEQS2 OUTPUT ALREADY GENERATED. SKIPPING STEP 1"
+		echo
+		echo "We're just going to quickly match the query genes against themselves for later on (step 3)"
 
-	# Create a self-match table for the clustering analysis
-	diamond blastp --${SENSITIVITY} \
-	 --query ${QUERY_FASTA} \
-	 --db ${TMP_PATH}/tmp_selfmatch_db \
-	 --outfmt 6 qseqid sseqid evalue bitscore \
-	 --evalue ${EVALUE} --max-target-seqs 0 \
-	 --threads ${THREADS} --out ${TMP_PATH}/tmp_${NCBITAX}_self_matches.bout --quiet ${DIAMONDOPTS}
+		# Generate DIAMOND database for self-match
+		diamond makedb \
+		 --in ${QUERY_FASTA} \
+		 --db ${TMP_PATH}/tmp_selfmatch_db --quiet
 
-	# Create input file for MCL
-	cut -f 1,2,3 ${TMP_PATH}/tmp_${NCBITAX}_self_matches.bout > ${TMP_PATH}/tmp_${NCBITAX}.abc
+		# Create a self-match table for the clustering analysis
+		diamond blastp --${SENSITIVITY} \
+		 --query ${QUERY_FASTA} \
+		 --db ${TMP_PATH}/tmp_selfmatch_db \
+		 --outfmt 6 qseqid sseqid evalue bitscore \
+		 --evalue ${EVALUE} --max-target-seqs 0 \
+		 --threads ${THREADS} --out ${TMP_PATH}/tmp_${NCBITAX}_self_matches.bout --quiet ${DIAMONDOPTS}
 
-	# Remove temporary files
-	rm ${TMP_PATH}/tmp_selfmatch_db* ${TMP_PATH}/tmp_${NCBITAX}_self_matches.bout
+		# Create input file for MCL
+		cut -f 1,2,3 ${TMP_PATH}/tmp_${NCBITAX}_self_matches.bout > ${TMP_PATH}/tmp_${NCBITAX}.abc
 
+		# Remove temporary files
+		rm ${TMP_PATH}/tmp_selfmatch_db* ${TMP_PATH}/tmp_${NCBITAX}_self_matches.bout
+
+	# If pre-generated DIAMOND file is empty, show error mesage and exit
+	else
+		echo
+		echo "  ERROR: The pre-generated DIAMOND/MMseqs2 file exists, but it is empty"
+		echo "  Exiting"
+		echo
+		exit 1
+	fi
 else
 
 	if [[ ! -f ${NR_DB}.dmnd ]]; then
@@ -407,12 +437,23 @@ else
 
 	DIAMONDOUT="${TMP_PATH}/${NCBITAX}_Diamond_results.bout"
 
-	echo "--------------------------------------------------"
-	echo "Step 1 finished!"
-	echo "The DIAMOND/MMseqs2 table can be found in ${DIAMONDOUT}"
-	echo "This file is usually HUGE, please dispose of it if you no longer find it useful"
-	echo "It can still be used (-p) in case the user wants to re-run genEra while skipping step 1"
+	# Check that the output file of STEP 1 is not empty
+	if [ -s ${DIAMONDOUT} ]; then
 
+		echo "--------------------------------------------------"
+		echo "Step 1 finished!"
+		echo "The DIAMOND/MMseqs2 table can be found in ${DIAMONDOUT}"
+		echo "This file is usually HUGE, please dispose of it if you no longer find it useful"
+		echo "It can still be used (-p) in case the user wants to re-run genEra while skipping step 1"
+
+	# Otherwise, display error and exit
+	else
+		echo
+		echo "  ERROR: The DIAMOND/MMseqs2 table is empty. Please check that DIAMOND and/or the target database were correctly installed"
+		echo "  Exiting"
+		echo
+		exit 1
+	fi
 fi
 
 #######################################################
@@ -422,8 +463,18 @@ fi
 # Generate a taxonomic database based on the daxdump from the NCBI and the output of ncbitax2lin
 if [ -n "$CUSTOMTAX" ]; then
 
-	echo
-	echo "THE SPECIES-TAILORED TAXONOMIC DATABASE WAS PROVIDED BY THE USER. SKIPPING STEP 2"
+	if [ -s ${CUSTOMTAX} ]; then
+
+		echo
+		echo "THE SPECIES-TAILORED TAXONOMIC DATABASE WAS PROVIDED BY THE USER. SKIPPING STEP 2"
+
+	else
+		echo
+		echo "  ERROR: The species-tailored file provided by the user is empty"
+		echo "  Exiting"
+		echo
+		exit 1
+	fi
 
 else
 
@@ -431,9 +482,18 @@ else
 	echo "STARTING STEP 2: GENERATING TAXONOMIC DATABASE FOR THE PHYLOSTRATIGRAPHIC ASSIGNMENT OF YOUR GENES"
 
 	if [ -n "$RAWTAX" ]; then
+		if [ -s ${RAWTAX} ]; then
 
-		echo "--------------------------------------------------"
-		echo "Using the raw \"ncbi_lineages\" file provided by the user. Skiping ncbitax2lin"
+			echo "--------------------------------------------------"
+			echo "Using the raw \"ncbi_lineages\" file provided by the user. Skiping ncbitax2lin"
+
+		else
+			echo
+			echo "  ERROR: The raw \"ncbi_lineages\" file provided by the user is empty"
+			echo "  Exiting"
+			echo
+			exit 1
+		fi
 
 	else
 		# Check whether ncbitax2lin exists in the PATH
@@ -483,9 +543,19 @@ else
 		exit 1
 	fi
 
-	echo "--------------------------------------------------"
-	echo "Rearranging the raw \"ncbi_lineages\" file by taxonomic hierarchy"
-	echo "--------------------------------------------------"
+	# Verify that the raw ncbi_lineages file is not empty
+	if [ -s ${RAWTAX} ]; then
+		echo "--------------------------------------------------"
+		echo "Rearranging the raw \"ncbi_lineages\" file by taxonomic hierarchy"
+		echo "--------------------------------------------------"
+	else
+		echo
+		echo "  ERROR: The raw \"ncbi_lineages\" file is empty"
+		echo "  Check that ncbitax2lin was correctly installed. Otherwise, you can download a pre-generated raw \"ncbi_lineages\" file from GenEra's github and use ir with the argument -r"
+		echo "  Exiting"
+		echo
+		exit 1
+	fi
 
 	# Extract the line in the "ncbi_lineages" file corresponding to the query organism
 	QPHYLOS=$(awk -F "," -v NCBITAX="$NCBITAX" '{ if ($1 == NCBITAX) print $0 }' ${RAWTAX})
@@ -674,10 +744,20 @@ else
 
 	fi
 
-	echo "--------------------------------------------------"
-	echo "Step 2 finished!"
-	echo "your species-tailored database can be found in ${NCBITAX}_${RAWTAX}"
-	echo "Keep this file in case you want to re-run step 3 of genEra with the same species (-c)"
+	if [ -s ${CUSTOMTAX} ]; then
+
+		echo "--------------------------------------------------"
+		echo "Step 2 finished!"
+		echo "your species-tailored database can be found in ${NCBITAX}_${RAWTAX}"
+		echo "Keep this file in case you want to re-run step 3 of genEra with the same species (-c)"
+
+	else
+		echo
+		echo "  ERROR: The species-tailored database is empty! please send me an email to figure out what might be the issue (josue.barrera@tuebingen.mpg.de)"
+		echo "  Exiting"
+		echo
+		exit 1
+	fi
 
 fi
 
@@ -843,8 +923,17 @@ echo "The number of of gene family founder events per phylostratum is summarized
 # Run abSENSE, if the user invokes it with -s
 if [[ -f ${DIVERGENCE} ]]; then
 
-	echo
-	echo "STARTING STEP 4: CALCULATING DETECTION FAILURE PROBABILITIES WITH abSENSE.py"
+	# Check that the abSENSE input file is not empty
+	if [ -s ${DIVERGENCE} ]; then
+		echo
+		echo "STARTING STEP 4: CALCULATING DETECTION FAILURE PROBABILITIES WITH abSENSE.py"
+	else
+		echo
+		echo "  ERROR: The file with the pairwise evolutionary distances is empty"
+		echo "  Exiting"
+		echo
+		exit 1
+	fi
 
 	# Split the input files in accordance to the number of threads
 	if [ "${THREADS}" -gt 1 ]; then
