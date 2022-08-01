@@ -22,7 +22,7 @@ Dependencies
 
 GenEra requires the following software dependencies:
 
--	[DIAMOND](https://github.com/bbuchfink/diamond "DIAMOND")
+-	[DIAMOND v2.0.0 or higher](https://github.com/bbuchfink/diamond "DIAMOND")
 -	[NCBItax2lin](https://github.com/zyxue/ncbitax2lin "NCBItax2lin")
 -	[MCL](https://github.com/micans/mcl "MCL")
 -	[MMseqs2](https://github.com/soedinglab/MMseqs2 "MMseqs2") (optional for protein-against-nucleotide sequence search)
