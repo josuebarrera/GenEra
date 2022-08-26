@@ -167,7 +167,7 @@ Fine-tunning and other useful arguments
 
 -  __-x__ &nbsp;&nbsp;&nbsp; Alternative path where the user would like to store the temporary files, as well as the DIAMOND/MMseqs2 results. GenEra generates HUGE temporary files (usually within the range of hundreds of Gigabytes in size), so users might have a hard time storing all these files within the working directory. Thus, the users can redirect the temporary files to a location where there is enough storage space for GenEra to run correctly. By default, the files are stored stored in a temporary directory within the working directory (tmp\_[TAXID]\_[RANDOMNUM]/), which is automatically created by GenEra.
 
--  __-y__ &nbsp;&nbsp;&nbsp; Modify the sensitivity parameter in DIAMOND. By default, GenEra runs DIAMOND in ultra-sensitive mode to retrieve the highest ammount of homologs in a reasonable amount of time. However, super-sensitive mode can achive similar results but much faster, or the user might want to sacrifice sensitivity in exchange for faster results (please refer to Figure SX of GenEra's paper to make an informed decision while modifying this parameter). 
+-  __-y__ &nbsp;&nbsp;&nbsp; Modify the sensitivity parameter in DIAMOND. By default, GenEra runs DIAMOND in sensitive mode to retrieve the highest ammount of homologs in a reasonable amount of time. Users can decide to run DIAMOND in ultra-sensitive mode to achieve slighlty higher sensitivity at the cost of speed, or the users might prefer to sacrifice sensitivity in exchange for faster results by using fast mode (please refer to Figure 3 of GenEra's paper to make an informed decision while modifying this parameter). 
 
 Output files
 ============
