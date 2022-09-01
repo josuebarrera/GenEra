@@ -1,8 +1,8 @@
 #!/bin/bash
 
-### genEra v1.0.2 (C) Max Planck Society for the Advancement of Science
+### genEra v1.0.3 (C) Max Planck Society for the Advancement of Science
 ###
-### Code developed by Josué Barrera-Redondo <josue.barrera@tuebingen.mpg.de>
+### Code developed by Josue Barrera-Redondo <josue.barrera@tuebingen.mpg.de>
 ###
 ### This program is free software: you can redistribute it and/or modify
 ### it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
 ### MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ### GNU General Public License for more details.
 
-VERSION='1.0.2'
+VERSION='1.0.3'
 
 QUERY_FASTA=''
 NCBITAX=''
@@ -549,7 +549,6 @@ else
 	if [ -s ${RAWTAX} ]; then
 		echo "--------------------------------------------------"
 		echo "Rearranging the raw \"ncbi_lineages\" file by taxonomic hierarchy"
-		echo "--------------------------------------------------"
 	else
 		echo
 		echo "  ERROR: The raw \"ncbi_lineages\" file is empty"
@@ -563,7 +562,7 @@ else
 	QPHYLOS=$(awk -F "," -v NCBITAX="$NCBITAX" '{ if ($1 == NCBITAX) print $0 }' ${RAWTAX})
 
 	# Download the correct lineage hierarchy of the query species directly from the NCBI webpage
-	wget "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=${NCBITAX}&lvl=3&p=has_linkout&p=blast_url&p=genome_blast&lin=f&keep=1&srchmode=1&unlock"
+	wget -q "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=${NCBITAX}&lvl=3&p=has_linkout&p=blast_url&p=genome_blast&lin=f&keep=1&srchmode=1&unlock"
 
 	if [[ -f wwwtax.cgi\?mode\=Info\&id\=${NCBITAX}\&lvl\=3\&p\=has_linkout\&p\=blast_url\&p\=genome_blast\&lin\=f\&keep\=1\&srchmode\=1\&unlock ]]; then
 
@@ -596,9 +595,10 @@ else
 		OLDEST=$(echo $QPHYLOS | awk -F "," '{ print $NF }')
 
 		echo "--------------------------------------------------"
-		echo "Extracting all the lineages that mached more than ${MINHITS} percent of your query proteins"
+		echo "Extracting all the lineages that match more than ${MINHITS} percent of your query proteins"
 
-		awk '{ print $NF }' ${DIAMONDOUT} | sort -n | uniq -c | awk -v MINHITS="$MINHITS" -v GENENUM="$GENENUM" '{ if (GENENUM/$1 < MINHITS) print $2 }' | sed '/^[[:space:]]*$/d' | awk -F "," 'FNR==NR{ a[$1]=$0;next } ($1 in a)' - ${TMP_PATH}/tmp_arranged_${RAWTAX} | grep "$OLDEST" > ${TMP_PATH}/tmp_${NCBITAX}_matches
+		HITPERC=$(( ${GENENUM}*${MINHITS}/100 ))
+		awk '{ print $NF }' ${DIAMONDOUT} | sort -n -T ${TMP_PATH} | uniq -c | awk -v HITPERC="$HITPERC" '{ if ($1 >= HITPERC) print $2 }' | sed '/^[[:space:]]*$/d' | awk -F "," 'FNR==NR{ a[$1]=$0;next } ($1 in a)' - ${TMP_PATH}/tmp_arranged_${RAWTAX} | grep "$OLDEST" > ${TMP_PATH}/tmp_${NCBITAX}_matches
 
 		# Finally, tailor the taxonomic database for the query species with the phylostrata that are useful for the analysis
 		COUNTER=2
@@ -666,7 +666,8 @@ else
 		GENENUM=$(grep -c ">" ${QUERY_FASTA})
 		OLDEST=$(echo $QPHYLOS | awk -F "," '{ print $NF }')
 
-		awk '{ print $NF }' ${DIAMONDOUT} | sort -n | uniq -c | awk -v MINHITS="$MINHITS" -v GENENUM="$GENENUM" '{ if (GENENUM/$1 < MINHITS) print $2 }' | sed '/^[[:space:]]*$/d' | awk -F "," 'FNR==NR{ a[$1]=$0;next } ($1 in a)' - ${TMP_PATH}/tmp_arranged_${RAWTAX} | grep "$OLDEST" > ${TMP_PATH}/tmp_${NCBITAX}_matches
+		HITPERC=$(( ${GENENUM}*${MINHITS}/100 ))
+		awk '{ print $NF }' ${DIAMONDOUT} | sort -n -T ${TMP_PATH} | uniq -c | awk -v HITPERC="$HITPERC" '{ if ($1 >= HITPERC) print $2 }' | sed '/^[[:space:]]*$/d' | awk -F "," 'FNR==NR{ a[$1]=$0;next } ($1 in a)' - ${TMP_PATH}/tmp_arranged_${RAWTAX} | grep "$OLDEST" > ${TMP_PATH}/tmp_${NCBITAX}_matches
 
 		#Evaluate the existance of unassignable clades in the database
 		MISSINGSTRATA=()
@@ -885,7 +886,7 @@ for GENECLUSTER in $(cat ${TMP_PATH}/tmp_${NCBITAX}.dump); do
 
 	GENEFAMILY=$(echo ${GENECLUSTER} | sed 's/\t/,/g')
 	FAMILYSIZE=$(echo ${GENECLUSTER} | sed 's/\t/\n/g' | wc -l)
-	FOUNDER=$(echo ${GENECLUSTER} | sed 's/\t/\n/g' | awk 'FNR==NR{ a[$1]=$0;next } ($1 in a)' - ${NCBITAX}_gene_ages.tsv | sort -t$'\t' -nk3 | grep -v "Possible contamination or HGT" | head -1 | cut -d'	' -f2,3)
+	FOUNDER=$(echo ${GENECLUSTER} | sed 's/\t/\n/g' | awk 'FNR==NR{ a[$1]=$0;next } ($1 in a)' - ${NCBITAX}_gene_ages.tsv | sort -T ${TMP_PATH} -t$'\t' -nk3 | grep -v "Possible contamination or HGT" | head -1 | cut -d'	' -f2,3)
 
 	if [[ -z ${FOUNDER} ]]; then
 		echo -e "$GENEFAMILY\tPossible contamination or HGT\tNA\t$FAMILYSIZE" >> ${NCBITAX}_founder_events.tsv
@@ -1040,7 +1041,7 @@ if [[ -f ${DIVERGENCE} ]]; then
 		awk -F "," -v COUNTER_HDF="$COUNTER_HDF" -v STRATUM="$STRATUM" -v COUNTER_OUTGROUP="$COUNTER_OUTGROUP" -v OUTGROUP_STRATUM="$OUTGROUP_STRATUM" '{ if ($COUNTER_HDF != STRATUM && $COUNTER_OUTGROUP == OUTGROUP_STRATUM) print $1 }' ${TMP_PATH}/tmp_taxa_distances > ${TMP_PATH}/tmp_outgroups
 
 		# Obtain the outgroup for each phylostratum with the lowest evolutionary distance to the target species
-		HDF_OUTGROUP=$(grep -w -f ${TMP_PATH}/tmp_outgroups ${DIVERGENCE} | sort -t$'\t' -nk2 | head -1 | cut -d "	" -f1)
+		HDF_OUTGROUP=$(grep -w -f ${TMP_PATH}/tmp_outgroups ${DIVERGENCE} | sort -T ${TMP_PATH} -t$'\t' -nk2 | head -1 | cut -d "	" -f1)
 
 		# Obtain the column in the bitscore file that corresponds to the outgroup of each phylostratum, so it can be used for the homology detection failure test
 		OUTGROUP_COLUMN=$(head -1 ${NCBITAX}_bitscores.tsv | sed -n $'1s/\t/\\\n/gp' | grep -w -nx "$HDF_OUTGROUP" | cut -d: -f1)

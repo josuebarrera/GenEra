@@ -1,8 +1,8 @@
 #!/bin/bash
 
-### Erassignment v1.0 (C) Max Planck Society for the Advancement of Science
+### Erassignment v1.0.1 (C) Max Planck Society for the Advancement of Science
 ###
-### Code developed by Josué Barrera-Redondo <josue.barrera@tuebingen.mpg.de>
+### Code developed by Josue Barrera-Redondo <josue.barrera@tuebingen.mpg.de>
 ###
 ### This program is free software: you can redistribute it and/or modify
 ### it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ for GENE in $(cat ${TMP_PATH}/tmp_gene_list); do
 	grep "${GENE}" ${DIAMONDOUT} > ${TMP_PATH}/tmp_${GENE}.bout
 
 	# Extract all the non-redundant taxids of the subject matches and extract their corresponding phylostrata. Limit the taxonomic search against sequences contained in the oldest phylostratum of the query organism
-	awk -v GENE="$GENE" '{ if ($1 == GENE) print $NF }' ${TMP_PATH}/tmp_${GENE}.bout | sort -u | sed '/^[[:space:]]*$/d' | awk -F "," 'FNR==NR{ a[$1]=$0;next } ($1 in a)' - ${NCBITAX} | grep "$OLDEST" > ${TMP_PATH}/tmp_phylostrata
+	awk -v GENE="$GENE" '{ if ($1 == GENE) print $NF }' ${TMP_PATH}/tmp_${GENE}.bout | sort -u -T ${TMP_PATH} | sed '/^[[:space:]]*$/d' | awk -F "," 'FNR==NR{ a[$1]=$0;next } ($1 in a)' - ${NCBITAX} | grep "$OLDEST" > ${TMP_PATH}/tmp_phylostrata
 
 	if [ -s ${TMP_PATH}/tmp_phylostrata ]; then
 
@@ -69,7 +69,7 @@ for GENE in $(cat ${TMP_PATH}/tmp_gene_list); do
 				echo -e "$GENE\t$STRATUM\t$PHYLORANK\t100" >> ${QTAXID}_gene_ages.tsv
 
 				if [[ "${PRINTOLDEST}" = "true" ]]; then
-					sort -nk4 ${TMP_PATH}/tmp_${GENE}.bout | tail -1 >> ${QTAXID}_deepest_homolog.tsv
+					sort -T ${TMP_PATH} -nk4 ${TMP_PATH}/tmp_${GENE}.bout | tail -1 >> ${QTAXID}_deepest_homolog.tsv
 				fi
 
 				break
@@ -92,7 +92,7 @@ for GENE in $(cat ${TMP_PATH}/tmp_gene_list); do
 				# If the user specifies it, extract the earliest-diverging match with the highest bitscore
 				if [[ "${PRINTOLDEST}" = "true" ]]; then
 					TAXLEVEL=$(echo $QPHYLOS | awk -F "," -v INVERTEDCOUNTER="$INVERTEDCOUNTER" '{ print $INVERTEDCOUNTER }')
-					awk -F "," -v INVERTEDCOUNTER="$INVERTEDCOUNTER" -v TAXLEVEL="$TAXLEVEL" '{ if ($INVERTEDCOUNTER != TAXLEVEL) print $1 }' ${TMP_PATH}/tmp_phylostrata | awk 'FNR==NR{ a[$1]=$0;next } ($NF in a)' - ${TMP_PATH}/tmp_${GENE}.bout | sort -nk4 | tail -1 >> ${QTAXID}_deepest_homolog.tsv
+					awk -F "," -v INVERTEDCOUNTER="$INVERTEDCOUNTER" -v TAXLEVEL="$TAXLEVEL" '{ if ($INVERTEDCOUNTER != TAXLEVEL) print $1 }' ${TMP_PATH}/tmp_phylostrata | awk 'FNR==NR{ a[$1]=$0;next } ($NF in a)' - ${TMP_PATH}/tmp_${GENE}.bout | sort -T ${TMP_PATH} -nk4 | tail -1 >> ${QTAXID}_deepest_homolog.tsv
 				fi
 
 				# Create another temporal file with the phylostrata that are to be pruned to assay completeness
@@ -182,7 +182,7 @@ for GENE in $(cat ${TMP_PATH}/tmp_gene_list); do
 			SP_ID=$(echo ${SPECIES} |  cut -d "	" -f1)
 
 			# Extract the bitscore from the top hit for that gene for each species in the divergence list
-			PUTATIVE_ORTHO=$(awk -v SP_ID="$SP_ID" '{ if ($NF == SP_ID) print $(NF-1) }' ${TMP_PATH}/tmp_${GENE}.bout | sort -V | tail -1)
+			PUTATIVE_ORTHO=$(awk -v SP_ID="$SP_ID" '{ if ($NF == SP_ID) print $(NF-1) }' ${TMP_PATH}/tmp_${GENE}.bout | sort -V -T ${TMP_PATH} | tail -1)
 
 			if [[ -z ${PUTATIVE_ORTHO} ]]; then
 				echo -e "0" >> ${TMP_PATH}/tmp_${QTAXID}_${GENE}_bitscore.tsv
