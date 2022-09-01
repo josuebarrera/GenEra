@@ -52,6 +52,14 @@ CONDABIN=$(which ncbitax2lin | sed 's/ncbitax2lin//g') && mv genEra ${CONDABIN} 
 
 Otherwise, you can install the dependencies independently and then include both genEra and Erassignment to your PATH.
 
+Once you finished, you can test whether genEra was installed correctly by running:
+
+```console
+./test_installation.sh
+```
+
+If all the tests appear as PASSED, then you are ready to use the software!
+
 Setting up the databases
 ========================
 
