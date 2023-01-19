@@ -51,6 +51,7 @@ conda install -c bioconda diamond
 conda install -c bioconda mcl
 pip install -U ncbitax2lin
 conda install -c conda-forge -c bioconda mmseqs2
+conda install -c conda-forge -c bioconda foldseek
 conda install -c anaconda scipy
 CONDABIN=$(which ncbitax2lin | sed 's/ncbitax2lin//g') && mv genEra ${CONDABIN} && mv Erassignment ${CONDABIN} && mv Run_abSENSE.py ${CONDABIN}
 ```
