@@ -5,14 +5,15 @@ Introduction
 
 GenEra is an easy-to-use and highly customizable command-line tool that estimates gene-family founder events (i.e., the age of the last common ancestor of protein-coding gene families) through the reimplementation of genomic phylostratigraphy (Domazet-Lošo et al., 2007). GenEra takes advantage of [DIAMOND](https://github.com/bbuchfink/diamond "DIAMOND")’s speed and sensitivity to search for homolog genes throughout the entire NR database, and combines these results with the [NCBI Taxonomy](https://www.ncbi.nlm.nih.gov/taxonomy "NCBI Taxonomy") to assign an origination date for each gene and gene family in a query species. GenEra can also incorporate protein data from external sources to enrich the analysis, it can search for proteins within nucleotide data (i.e., genome/transcriptome assemblies) using [MMseqs2](https://github.com/soedinglab/MMseqs2 "MMseqs2") to improve the classification of orphan genes, and it calculates a taxonomic representativeness score to assess the reliability of assigning a gene to a specific age. Additionally, GenEra can calculate homology detection failure probabilities using [abSENSE](https://github.com/caraweisman/abSENSE "abSENSE") to help distinguish fast-evolving genes from high-confidence gene-family founder events. 
 
-As of v1.1.0, users can now use Foldseek to search protein structural predictions against the AlphaFold DB for sensitive structural alignments. Alternatively, the user can choose to perform a reassessment of gene ages by running jackhmmer on top of DIAMOND (be aware, jackhmmer runs very slowly). 
+As of v1.1.0, users can now use [Foldseek](https://github.com/steineggerlab/foldseek "Foldseek") to search protein structural predictions against the [AlphaFold DB](https://alphafold.ebi.ac.uk/ "AlphaFold DB") for fast and sensitive structural alignments. Alternatively, the user can choose to perform a reassessment of gene ages by running [jackhmmer](http://hmmer.org/ "HMMER") on top of DIAMOND (be aware, jackhmmer runs very slowly). 
 
 Contents
 ========
 
 -   [Dependencies](#dependencies)
 -   [Installation](#installation)
--   [Setting up the databases](#setting-up-the-databases)
+-   [Setting up the databases (if using DIAMOND)](#setting-up-the-databases-if-using-diamond)
+-   [Setting up the databases (if using Foldseek)](#setting-up-the-databases-if-using-foldseek)
 -   [Quick start for the impatient](#quick-start-for-the-impatient)
 -   [Arguments and input files](#arguments-and-input-files)
 -   [Fine-tunning and other useful arguments](#fine-tunning-and-other-useful-arguments)
@@ -66,8 +67,8 @@ Once you finished, you can test whether genEra was installed correctly by runnin
 
 If all the tests appear as PASSED, then you are ready to use the software!
 
-Setting up the databases
-========================
+Setting up the databases (if using DIAMOND)
+===========================================
 
 First, download the nr database (warning: this is a huge FASTA file):
 ```console
@@ -96,6 +97,25 @@ diamond makedb \
  --memory-limit 100
 ```
 You can eliminate “prot.accession2taxid”, but keep the taxdump, as GenEra will use it later on.
+
+Setting up the databases (if using Foldseek)
+============================================
+
+Foldseek uses 3D structure predictions in PDB format as input. So first make sure that you have structural predictions for each protein of your query species. This can be done using tools such as [AlphaFold](https://github.com/deepmind/alphafold "AlphaFold") or [OmegaFold](https://github.com/HeliXonProtein/OmegaFold "OmegaFold"). for example:
+```console
+omegafold query_sequences.fasta output_directory 
+```
+The folding prediction of each protein should be stored on independent PDB files within a single directory. Make sure all the PDB files are uncompressed before running the analysis! 
+
+Once you have that, use Foldseek to download the AlphaFold database (warning: this database is huge):
+```console
+foldseek databases Alphafold/UniProt alphafoldDB tmp 
+```
+Finally, download the taxonomy dump from the NCBI:
+```console
+wget -N ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
+mkdir -p taxdump && tar zxf taxdump.tar.gz -C ./taxdump
+```
 
 Quick start for the impatient
 =============================
