@@ -3,7 +3,8 @@
 Introduction
 ============
 
-GenEra is an easy-to-use, low-dependency and highly customizable command-line tool that estimates gene-family founder events (i.e., the age of the last common ancestor of protein-coding gene families) through the reimplementation of genomic phylostratigraphy (Domazet-Lošo et al., 2007). GenEra takes advantage of [DIAMOND](https://github.com/bbuchfink/diamond "DIAMOND")’s speed and sensitivity to search for homolog genes throughout the entire NR database, and combines these results with the [NCBI Taxonomy](https://www.ncbi.nlm.nih.gov/taxonomy "NCBI Taxonomy") to assign an origination date for each gene and gene family in a query species. GenEra can also incorporate protein data from external sources to enrich the analysis, it can search for proteins within nucleotide data (i.e., genome/transcriptome assemblies) using [MMseqs2](https://github.com/soedinglab/MMseqs2 "MMseqs2") to improve the classification of orphan genes, and it calculates a taxonomic representativeness score to assess the reliability of assigning a gene to a specific age. Additionally, GenEra can calculate homology detection failure probabilities using [abSENSE](https://github.com/caraweisman/abSENSE "abSENSE") to help distinguish fast-evolving genes from high-confidence gene-family founder events.
+GenEra is an easy-to-use and highly customizable command-line tool that estimates gene-family founder events (i.e., the age of the last common ancestor of protein-coding gene families) through the reimplementation of genomic phylostratigraphy (Domazet-Lošo et al., 2007). GenEra takes advantage of [DIAMOND](https://github.com/bbuchfink/diamond "DIAMOND")’s speed and sensitivity to search for homolog genes throughout the entire NR database, and combines these results with the [NCBI Taxonomy](https://www.ncbi.nlm.nih.gov/taxonomy "NCBI Taxonomy") to assign an origination date for each gene and gene family in a query species. GenEra can also incorporate protein data from external sources to enrich the analysis, it can search for proteins within nucleotide data (i.e., genome/transcriptome assemblies) using [MMseqs2](https://github.com/soedinglab/MMseqs2 "MMseqs2") to improve the classification of orphan genes, and it calculates a taxonomic representativeness score to assess the reliability of assigning a gene to a specific age. Additionally, GenEra can calculate homology detection failure probabilities using [abSENSE](https://github.com/caraweisman/abSENSE "abSENSE") to help distinguish fast-evolving genes from high-confidence gene-family founder events. 
+As fo v1.1.0, users can now use Foldseek to search protein structural predictions against the AlphaFold DB for sensitive structural alignments. Alternatively, the user can choose to perform a reassessment of gene ages by running jackhmmer on top of DIAMOND (be aware, jackhmmer runs very slowly). 
 
 Contents
 ========
@@ -23,13 +24,15 @@ Dependencies
 GenEra requires the following software dependencies:
 
 -	[DIAMOND v2.0.0 or higher](https://github.com/bbuchfink/diamond "DIAMOND")
+-	[Foldseek v3.915ef7d or higher](https://github.com/steineggerlab/foldseek "Foldseek")
 -	[NCBItax2lin](https://github.com/zyxue/ncbitax2lin "NCBItax2lin")
 -	[MCL](https://github.com/micans/mcl "MCL")
 -	[MMseqs2](https://github.com/soedinglab/MMseqs2 "MMseqs2") (optional for protein-against-nucleotide sequence search)
 -	[abSENSE](https://github.com/caraweisman/abSENSE "abSENSE") (optional to calculate homology detection failure probabilities)
 -	[NumPy](https://numpy.org/ "NumPy") and [SciPy](https://scipy.org/ "SciPy") (needed to run abSENSE in step 4)
+-	[R](https://www.r-project.org/ "R") alongside the libraries [optparse](https://cran.r-project.org/web/packages/optparse/index.html "optparse"), [Bio3D](http://thegrantlab.org/bio3d/ "Bio3D"), [Tidyverse](https://www.tidyverse.org/ "Tidyverse"), and [SeqinR](https://cran.r-project.org/web/packages/seqinr/index.html "SeqinR") (optional for jackhmmer reassessment)
 
-Additionally, GenEra requires a locally installed NR database for DIAMOND, as well as internet connection and access to the taxonomy dump from the NCBI.
+Additionally, GenEra requires internet connection, access to the taxonomy dump from the NCBI, and either a locally installed NR database for DIAMOND or a locally installed AlphaFold database for Foldseek.
 
 Installation
 ============
@@ -51,6 +54,8 @@ CONDABIN=$(which ncbitax2lin | sed 's/ncbitax2lin//g') && mv genEra ${CONDABIN} 
 ```
 
 Otherwise, you can install the dependencies independently and then include both genEra and Erassignment to your PATH.
+
+We will also release a Docker container soon!!!
 
 Once you finished, you can test whether genEra was installed correctly by running:
 
@@ -190,13 +195,13 @@ Output files
 
 -  __[TAXID]\_founder\_summary.tsv__ &nbsp;&nbsp;&nbsp; Summary file with the number of putative gene-family founder events per phylostratum.
 
--  __[TAXID]\_high\_confidence\_gene\_ages.tsv (Optional)__ &nbsp;&nbsp;&nbsp; Tab-delimited table that contains the genes whose age assignment cannot be explained by homology detection failure. This file is created by GenEra whenever the user specified a table with pairwise evolutionary distances using __-s__. The genes are selected based on the detection failure probabilities (calculated with [abSENSE](https://github.com/caraweisman/abSENSE "abSENSE")) of the closest outgroup for each given phylostratum in the analysis. All the genes whose detection failure probabilities are lower than 0.05 in the closest outgroup are deemed as high-confidence gene age assignments.
+-  __[TAXID]\_HDF\_gene\_ages.tsv (Optional)__ &nbsp;&nbsp;&nbsp; Tab-delimited table that contains the genes whose age assignment cannot be explained by homology detection failure (HDF). This file is created by GenEra whenever the user specified a table with pairwise evolutionary distances using __-s__. The genes are selected based on the detection failure probabilities (calculated with [abSENSE](https://github.com/caraweisman/abSENSE "abSENSE")) of the closest outgroup for each given taxonomic level in the analysis. All the genes whose detection failure probabilities are lower than 0.05 in the closest outgroup are deemed as gene age assignments that passed the HDF test.
 
--  __[TAXID]\_high\_confidence\_gene\_age\_summary.tsv (Optional)__ &nbsp;&nbsp;&nbsp; Summary file with the number of high-confidence gene-age assignments for each phylostratum. This file is created by GenEra whenever the user specified a table with pairwise evolutionary distances using __-s__. GenEra will assign an NA in the gene count of all the phylostrata that lacked an outgroup in the file with evolutionary distances. Species-specific genes are also treated as NA. Phylostrata with a gene count of 0 means that an appropriate outgroup was available in the analysis, but GenEra could not detect any high-confidence gene for that phylostratum. The fouth column contains the NCBI taxonomy ID of the outgroup that was used to calculate the high-confidence dataset.
+-  __[TAXID]\_HDF\_gene\_age\_summary.tsv (Optional)__ &nbsp;&nbsp;&nbsp; Summary file with the number of gene-age assignments that passed the HDF test for each taxonomic level. This file is created by GenEra whenever the user specified a table with pairwise evolutionary distances using __-s__. GenEra will assign an NA in the gene count of all the taxonomic levels that lacked an outgroup in the file with evolutionary distances. Species-specific genes are also treated as NA, since detection failure probabilities cannot be calculated for single datapoints. Taxonomic levels with a gene count of 0 means that an appropriate outgroup was available in the analysis, but GenEra could not detect any high-confidence gene for that taxonomic level (sometimes due to the lack of enough datapoints to calulate detection failure probabilities). The fouth column contains the NCBI taxonomy ID of the outgroup species that was used to determine whether these genes passed the HDF test or not.
 
--  __[TAXID]\_high\_confidence\_founder\_events.tsv (Optional)__ &nbsp;&nbsp;&nbsp; Tab-delimited table that contains the oldest age assignment of the high-confidence gene-family founder events (_i.e._, gene families whose age assignment cannot be explained by homology detection failure). This file is created by GenEra whenever the user specified a table with pairwise evolutionary distances using __-s__.
+-  __[TAXID]\_HDF\_founder\_events.tsv (Optional)__ &nbsp;&nbsp;&nbsp; Tab-delimited table that contains the oldest age assignment of the gene-families that contain at least one gene that passed the HDF test for that taxonomic level (_i.e._, gene-family founder events whose age assignment cannot be explained by HDF). This file is created by GenEra whenever the user specified a table with pairwise evolutionary distances using __-s__.
 
--  __[TAXID]\_high\_confidence\_founder\_summary.tsv (Optional)__ &nbsp;&nbsp;&nbsp; Summary file with the number of high-confidence gene-family founder events per phylostratum. This file is created by GenEra whenever the user specified a table with pairwise evolutionary distances using __-s__. The fouth column contains the NCBI taxonomy ID of the outgroup that was used to calculate the high-confidence dataset.
+-  __[TAXID]\_HDF\_founder\_summary.tsv (Optional)__ &nbsp;&nbsp;&nbsp; Summary file with the number of gene-family founder events that passed the HDF test per taxonomic level. This file is created by GenEra whenever the user specified a table with pairwise evolutionary distances using __-s__. The fouth column contains the NCBI taxonomy ID of the outgroup species that was used to calculate determine whether these gene families passed the HDF test or not.
 
 ### Other output files that are relevant:
 
@@ -219,10 +224,15 @@ The preprint describing the method implemented in GenEra:
 ```console
 Barrera-Redondo, J., Lotharukpong, J.S., Drost, H.G., Coelho, S.M. (2022). Uncovering gene-family founder events during major evolutionary transitions in animals, plants and fungi using GenEra. bioRxix: https://doi.org/10.1101/2022.07.07.498977
 ```
-GenEra makes use of several dependencies that should also be cited, as follows:
+GenEra makes use of several dependencies that should also be cited, if implemented within the pipeline:
 ```console
 Buchfink, B., Reuter, K., Drost, H.G. (2021). Sensitive protein alignments at tree-of-life scale using DIAMOND. Nature methods, 18(4), 366-368.
 Steinegger, M., Söding, J. (2017). MMseqs2 enables sensitive protein sequence searching for the analysis of massive data sets. Nature biotechnology, 35(11), 1026-1028.
 Enright, A.J., Van Dongen, S., Ouzounis, C.A. (2002). An efficient algorithm for large-scale detection of protein families. Nucleic acids research, 30(7), 1575-1584.
 Weisman, C.M., Murray, A.W., Eddy, S.R. (2020). Many, but not all, lineage-specific genes can be explained by homology detection failure. PLoS biology, 18(11), e3000862.
+van Kempen, M., Kim, S., Tumescheit, C., Mirdita, M., Söding, J., & Steinegger, M. (2022). Foldseek: fast and accurate protein structure search. bioRxiv.
+Varadi, M., Anyango, S., Deshpande, M., Nair, S., Natassia, C., Yordanova, G., ... & Velankar, S. (2022). AlphaFold Protein Structure Database: massively expanding the structural coverage of protein-sequence space with high-accuracy models. Nucleic acids research, 50(D1), D439-D444.
+Grant, B. J., Rodrigues, A. P., ElSawy, K. M., McCammon, J. A., & Caves, L. S. (2006). Bio3d: an R package for the comparative analysis of protein structures. Bioinformatics, 22(21), 2695-2696.
+Finn, R. D., Clements, J., & Eddy, S. R. (2011). HMMER web server: interactive sequence similarity searching. Nucleic acids research, 39(suppl_2), W29-W37.
+Charif, D., & Lobry, J. R. (2007). SeqinR 1.0-2: a contributed package to the R project for statistical computing devoted to biological sequences retrieval and analysis. In Structural approaches to sequence evolution (pp. 207-232). Springer, Berlin, Heidelberg.
 ```
