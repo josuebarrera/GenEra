@@ -176,21 +176,21 @@ awk -F'"' -v OFS='' '{ for (i=2; i<=NF; i+=2) gsub(",", "", $i) } 1' ncbi_lineag
 
 -  __-a__ &nbsp;&nbsp;&nbsp; Tab-delimited table with additional proteins to be included in the analysis __(only compatible when using FASTA sequences as input)__. This option is particularly useful if the user wants to include proteins from species that are absent from the nr database, such as newly annotated genomes or transcriptomes. It can also help fill the gaps of phylostrata that would otherwise be collapsed due to lack of available genomes in the database. Importantly, each protein in this custom dataset should have unique identifiers, otherwise GenEra will not work properly during the taxonomic assignment of the Diamond hits. The table format consists of the location of one protein FASTA file for each species in the first column and the NCBI taxonomy ID of that species in the second column:
 
-		   /path/to/species_1.fasta	taxid_1
-		   /path/to/species_2.fasta	taxid_2
-		   /path/to/species_3.fasta	taxid_3
+		/path/to/species_1.fasta	taxid_1
+		/path/to/species_2.fasta	taxid_2
+		/path/to/species_3.fasta	taxid_3
 
 -  __-f__ &nbsp;&nbsp;&nbsp; Tab-delimited table with additional nucleotide sequences (e.g., non-annotated genome assemblies) to be searched against your query proteins with MMseqs2 in a "tblastn" fashion __(only compatible when using FASTA sequences as input)__. This option is extremely useful to improve the detection of orphan genes, since errors in the genome annotations can oftentimes lead to the spurious detection of taxonomically-restricted genes ([Basile et al., 2019](https://doi.org/10.1101/185983 "Basile et al., 2019"); [Weisman et al., 2022](https://doi.org/10.1016/j.cub.2022.04.085 "Weisman et al., 2022")). Importantly, each contig/scaffold/chromosome in this dataset should have a unique identifier (e.g., avoid having multiple “>chr1” sequences throughout your genome assemblies). The table format consists of the location of one nucleotide FASTA file for each genome/transcriptome assembly in the first column and the NCBI taxonomy ID of that species in the second column:
 
-		   /path/to/assembly_1.fasta	taxid_1
-		   /path/to/assembly_2.fasta	taxid_2
-		   /path/to/assembly_3.fasta	taxid_3
+		/path/to/assembly_1.fasta	taxid_1
+		/path/to/assembly_2.fasta	taxid_2
+		/path/to/assembly_3.fasta	taxid_3
 
 -  __-A__ &nbsp;&nbsp;&nbsp; Tab-delimited table with additional structural predictions to be included in the analysis __(only compatible when using PDB files as input)__. This option is useful if the user wants to include protein folding predictions from species that are absent from the AlphaFold database, such as newly annotated genomes. It can also help fill the gaps of phylostrata that would otherwise be collapsed due to lack of available genomes in the database. Importantly, each PDB file in this custom dataset should have a unique identifier, both within and between species, otherwise GenEra will not work properly during the taxonomic assignment of the Foldseek hits. The table format consists of the location of one directory containing all the uncompressed PDB files for each species in the first column and the NCBI taxonomy ID of that species in the second column:
 
-		   /path/to/species_directory_1	taxid_1
-		   /path/to/species_directory_2	taxid_2
-		   /path/to/species_directory_3	taxid_3
+		/path/to/species_directory_1	taxid_1
+		/path/to/species_directory_2	taxid_2
+		/path/to/species_directory_3	taxid_3
 
 -  __-s__ &nbsp;&nbsp;&nbsp; Tab-delimited table with pairwise evolutionary distances, calculated as substitutions/site, between several species in a phylogeny and the query species. This file is necessary to calculate the detection failure probabilities of the query genes in step 4 using abSENSE ([Weisman et al., 2020](https://doi.org/10.1371/journal.pbio.3000862 "Weisman et al., 2020")), which allows GenEra to find gene age assignments and gene-family founder events that cannot be explained by homology detection failure (HDF). Please note that HDF-tested gene age assignments can only be calculated whenever the user gives GenEra evolutionary distances of species that are found in the taxonomic level that inmediately precedes the one that is being studied (_i.e._, the next older taxonomic level), meaning that genEra will not be able to evaluate DHF-tested assignments for the oldestaxonomic level that contains species representatives in the file with evolutionary distances, nor for taxonomic levels that lack an outgroup species in the file with evolutionary distances. Also note that HDF-tested gene age assignments cannot be calculated for species-specific genes, reason being that detection failure probabilities cannot be calculated for genes that lack any traceable homologs (please read [Weisman et al., 2020](https://doi.org/10.1371/journal.pbio.3000862 "Weisman et al., 2020") for more details). Finally, please make sure that the species from which you have evolutionary distances are also represented in the databases that are being used for the homology search using either DIAMOND or Foldseek. In order to calculate reliable detection failure probabilities, it is important to have as many closely-related species as posible in the evolutionary distance file. Extracting the pairwise distances between any pair of species can be easily achieved with the [ape package in R](http://ape-package.ird.fr/ "ape package in R") ([Paradis et al., 2019](https://doi.org/10.1093/bioinformatics/bty633 "Paradis et al., 2019")), if you have phylogenetic tree in NEWICK format:
 ```console
@@ -201,9 +201,9 @@ write.table(distances,"pairwise_distances.tsv", row.names = TRUE, sep = "\t")
 ```
 &nbsp;&nbsp;&nbsp;&nbsp; Afterwards, the distance table should contain the species taxid in the first column and the distance in substitutions per site in the second column (NOTE that the query species is also included in the table, with an evolutionary distance of 0):
 
-		   query_sp_taxid	0
-		   species_1_taxid	distance_1
-		   species_2_taxid	distance_2
+		query_sp_taxid	0
+		species_1_taxid	distance_1
+		species_2_taxid	distance_2
 
 -  __-i__ &nbsp;&nbsp;&nbsp; Boolean argument that, when true, generates an additional output file with the best sequence/structure hit responsible for the oldest gene age assignment for each of the query genes. This file is mainly used to verify whether the oldest age assignment of genes are not driven by false positive matches to the database. Established by default as "false" to save computing time.
 
@@ -214,17 +214,25 @@ Fine-tunning and other useful arguments
 
 -  __-n__ &nbsp;&nbsp;&nbsp; Number of threads to run GenEra. This is the only parameter we HIGHLY SUGGEST to modify, in accordance to the user's needs and resources. Running GenEra is computationally expensive, so using a small amount of threads will result in long running times. By default, GenEra uses 20 threads to run, but we suggest to use as many threads as possible.
 
--  __-l__ &nbsp;&nbsp;&nbsp; Taxonomic representativeness threshold below which a gene will be flagged as putative genome contamination or the product of a horizontal gene transfer event. The threshold is established as 30% by default, but it can be freely modified by the user. Please refer to GenEra's paper (in prep) for a detailed explanation of taxonomic representativeness. 
+-  __-o__ &nbsp;&nbsp;&nbsp; Path to the directory where you want to store the final output files (GenEra will automatically create this directory if it doesn't exist). Many users like to keep things tidy and separate the output files to an specific location of their computer. By default, GenEra stores the output files within the working directory.
 
--  __-e__ &nbsp;&nbsp;&nbsp; E-value threshold for DIAMOND and MMseqs2, in order to consider a sequence match as a homolog. This value is established as 1e-5 by default, but the user can modify it to a more relaxed or stringent threshold.
+-  __-l__ &nbsp;&nbsp;&nbsp; Taxonomic representativeness threshold below which a gene will be flagged as putative genome contamination or the product of a horizontal gene transfer event. The threshold is established as 30% by default, but it can be freely modified by the user. Please refer to [GenEra's preprint](https://doi.org/10.1101/2022.07.07.498977 "GenEra paper") for a detailed explanation of taxonomic representativeness. 
 
--  __-o__ &nbsp;&nbsp;&nbsp; Additional options to feed DIAMOND, based on the user's preferences. This can be useful if, for example, the user wants to filter the homology results based on identity thresholds or query coverage thresholds, instead of the e-value. Users should input the additional commands in quotes, using the original arguments from DIAMOND (for example: -o "--id 30").
+-  __-e__ &nbsp;&nbsp;&nbsp; E-value threshold for DIAMOND or Foldseek, in order to consider a sequence match as a homolog. This value is established as 1e-5 by default, but the user can modify it to a more relaxed or stringent threshold.
 
--  __-m__ &nbsp;&nbsp;&nbsp; Minimum percentage of matches between your query sequences and another species to consider it useful for the gene age assignment. This parameter only determines whether a phylostratum will be collapsed or not during step 2 of the pipeline. The parameter is implemented so that GenEra collapses the phylostrata where all the representative species lack WGS data in the databases. By default, this threshold is empirically established as 10% of sequence matches with respect to the number of genes in the query species. For example, if the query species has 26,000 genes, and all the representative species for a given phylostratum contain less that 2,600 matches to the query proteins, then the phylostratum is "collapsed" or removed from the analysis.
+-  __-u__ &nbsp;&nbsp;&nbsp; Additional options to feed DIAMOND or Foldseek, based on the user's preferences. This can be useful if, for example, the user wants to filter the homology results based on identity thresholds or query coverage thresholds, instead of the e-value. Users should input the additional commands in quotes, using the original arguments from DIAMOND (for example: -o "--id 30") or from Foldseek (for example: -o "-c 0.8 --cov-mode 0").
 
--  __-x__ &nbsp;&nbsp;&nbsp; Alternative path where the user would like to store the temporary files, as well as the DIAMOND/MMseqs2 results. GenEra generates HUGE temporary files (usually within the range of hundreds of Gigabytes in size), so users might have a hard time storing all these files within the working directory. Thus, the users can redirect the temporary files to a location where there is enough storage space for GenEra to run correctly. By default, the files are stored stored in a temporary directory within the working directory (tmp\_[TAXID]\_[RANDOMNUM]/), which is automatically created by GenEra.
+-  __-m__ &nbsp;&nbsp;&nbsp; Minimum percentage of matches between your query sequences and another species to consider it useful for the gene age assignment. This parameter only determines whether a taxonomic level will be collapsed or not during step 2 of the pipeline. The parameter is implemented so that GenEra collapses the taxonomic levels where all the representative species lack WGS data in the databases. By default, this threshold is empirically established as 10% of sequence matches with respect to the number of genes in the query species. For example, if the query species has 26,000 genes, and all the representative species for a given phylostratum contain less that 2,600 matches to the query proteins, then the taxonomic level is "collapsed" or removed from the analysis.
 
--  __-y__ &nbsp;&nbsp;&nbsp; Modify the sensitivity parameter in DIAMOND. By default, GenEra runs DIAMOND in sensitive mode to retrieve the highest ammount of homologs in a reasonable amount of time. Users can decide to run DIAMOND in ultra-sensitive mode to achieve slighlty higher sensitivity at the cost of speed, or the users might prefer to sacrifice sensitivity in exchange for faster results by using fast mode (please refer to Figure 3 of GenEra's paper to make an informed decision while modifying this parameter). 
+-  __-x__ &nbsp;&nbsp;&nbsp; Alternative path where the user would like to store the temporary files, as well as the DIAMOND/Foldseek results. GenEra generates HUGE temporary files (usually within the range of dozens to hundreds of Gigabytes in size), so users might have a hard time storing all these files within the working directory. Thus, the users can redirect the temporary files to a location where there is enough storage space for GenEra to run correctly. By default, the files are stored stored in a temporary directory within the working directory (tmp\_[TAXID]\_[RANDOMNUM]/), which is automatically created by GenEra.
+
+-  __-y__ &nbsp;&nbsp;&nbsp; Modify the sensitivity parameter in DIAMOND. By default, GenEra runs DIAMOND in sensitive mode to retrieve the highest ammount of homologs in a reasonable amount of time. Users can decide to run DIAMOND in ultra-sensitive mode to achieve slighlty higher sensitivity at the cost of speed, or the users might prefer to sacrifice sensitivity in exchange for faster results by using fast mode (please refer to Figure 3 of [GenEra's paper](https://doi.org/10.1101/2022.07.07.498977 "GenEra paper") to make an informed decision while modifying this parameter). 
+
+-  __-M__ &nbsp;&nbsp;&nbsp; Adjust the amount of prefilter made by Foldseek (i.e., the maximum number of hits that are reported in the output file). Unlike DIAMOND, Foldseek lacks the option to print an unlimited amount of sequence hits, which may hamper the hability of the user to trace back very deep evolutionary homologs for the query proteins. We prefer to keep this parameter as high as possible, although this desicion is usually limited by the amout of RAM and storage that Foldseek will use. By default, GenEra limits the maximum number of hits to 10000, but the user can modify this parameter in accordance with their needs and hardware limitations.
+
+-  __-j__ &nbsp;&nbsp;&nbsp; When true, GenEra runs an additional search step using jackhmmer against the online Uniprot database for all the genes that could bnot be traced back to "cellular organisms". For this, GenEra uses the R package [Bio3D](http://thegrantlab.org/bio3d/ "Bio3D") to submit individual jobs to the EMBL-EBI server. We decided to use this method, since the local version of HMMER does not output taxids, while the online version does. This severely limits the speed this search step, since it cannot be multithreaded. Additionally, it requires constant access to the internet to work. Nonetheless, we implemented this step for users that prefer to search for protein homologs using HMM-profile methods.
+
+-  __-k__ &nbsp;&nbsp;&nbsp; asnxls
 
 Output files
 ============
