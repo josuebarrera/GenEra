@@ -1,6 +1,6 @@
 #!/bin/bash
 
-### Erassignment v1.0.1 (C) Max Planck Society for the Advancement of Science
+### Erassignment v1.0.2 (C) Max Planck Society for the Advancement of Science
 ###
 ### Code developed by Josue Barrera-Redondo <josue.barrera@tuebingen.mpg.de>
 ###
@@ -25,7 +25,8 @@ QTAXID=$3
 THRESHOLD=$4
 TMP_PATH=$5
 PRINTOLDEST=$6
-DIVERGENCE=$7
+OUTDIR=$7
+DIVERGENCE=$8
 
 # Extract the philostrata corresponding to the query organism
 QPHYLOS=$(awk -F "," -v QTAXID="$QTAXID" '{ if ($1 == QTAXID) print $0 }' ${NCBITAX})
@@ -66,10 +67,10 @@ for GENE in $(cat ${TMP_PATH}/tmp_gene_list); do
 			# If it matches at the species level:
 			if [ $TOTALTAXA == $MATCHINGTAXA ] && [ $COUNTER -eq 2 ]; then
 
-				echo -e "$GENE\t$STRATUM\t$PHYLORANK\t100" >> ${QTAXID}_gene_ages.tsv
+				echo -e "$GENE\t$STRATUM\t$PHYLORANK\t100" >> ${OUTDIR}/${QTAXID}_gene_ages.tsv
 
 				if [[ "${PRINTOLDEST}" = "true" ]]; then
-					sort -T ${TMP_PATH} -nk4 ${TMP_PATH}/tmp_${GENE}.bout | tail -1 >> ${QTAXID}_deepest_homolog.tsv
+					sort -T ${TMP_PATH} -nk4 ${TMP_PATH}/tmp_${GENE}.bout | tail -1 >> ${OUTDIR}/${QTAXID}_deepest_homolog.tsv
 				fi
 
 				break
@@ -92,7 +93,7 @@ for GENE in $(cat ${TMP_PATH}/tmp_gene_list); do
 				# If the user specifies it, extract the earliest-diverging match with the highest bitscore
 				if [[ "${PRINTOLDEST}" = "true" ]]; then
 					TAXLEVEL=$(echo $QPHYLOS | awk -F "," -v INVERTEDCOUNTER="$INVERTEDCOUNTER" '{ print $INVERTEDCOUNTER }')
-					awk -F "," -v INVERTEDCOUNTER="$INVERTEDCOUNTER" -v TAXLEVEL="$TAXLEVEL" '{ if ($INVERTEDCOUNTER != TAXLEVEL) print $1 }' ${TMP_PATH}/tmp_phylostrata | awk 'FNR==NR{ a[$1]=$0;next } ($NF in a)' - ${TMP_PATH}/tmp_${GENE}.bout | sort -T ${TMP_PATH} -nk4 | tail -1 >> ${QTAXID}_deepest_homolog.tsv
+					awk -F "," -v INVERTEDCOUNTER="$INVERTEDCOUNTER" -v TAXLEVEL="$TAXLEVEL" '{ if ($INVERTEDCOUNTER != TAXLEVEL) print $1 }' ${TMP_PATH}/tmp_phylostrata | awk 'FNR==NR{ a[$1]=$0;next } ($NF in a)' - ${TMP_PATH}/tmp_${GENE}.bout | sort -T ${TMP_PATH} -nk4 | tail -1 >> ${OUTDIR}/${QTAXID}_deepest_homolog.tsv
 				fi
 
 				# Create another temporal file with the phylostrata that are to be pruned to assay completeness
@@ -128,6 +129,15 @@ for GENE in $(cat ${TMP_PATH}/tmp_gene_list); do
 					fi
 
 					let INVERTEDCOUNTER-=1
+
+					# Add the last taxonomic level to the array if the previous level was incomplete (since the gene is obviously present in the query)
+					if [ $INVERTEDCOUNTER -lt 2 ]; then
+						if [ $INCOMPLETE ]; then
+							BACKTRACK=$(($INVERTEDCOUNTER + 1))
+							ARRAY+=$(echo $QPHYLOS | awk -F "," -v BACKTRACK="$BACKTRACK" '{ print $BACKTRACK"," }')
+							INCOMPLETE=false
+						fi
+					fi
 				done
 
 				rm ${TMP_PATH}/tmp_sub_phylostrata
@@ -136,21 +146,21 @@ for GENE in $(cat ${TMP_PATH}/tmp_gene_list); do
 
 				# If the younger phylostrata are complete enough, then assign the oldest matching phylostratum as the potential age of the gene
 				if [ $PROPORTIONSTRATA -gt $THRESHOLD ]; then
-					echo -e "$GENE\t$STRATUM\t$PHYLORANK\t$PROPORTIONSTRATA" >> ${QTAXID}_gene_ages.tsv
+					echo -e "$GENE\t$STRATUM\t$PHYLORANK\t$PROPORTIONSTRATA" >> ${OUTDIR}/${QTAXID}_gene_ages.tsv
 
 				# Otherwise flag the gene as potential contamination or HGT event.
 				else
-					echo -e "$GENE\tPossible contamination or HGT\tNA\t$PROPORTIONSTRATA" >> ${QTAXID}_gene_ages.tsv
+					echo -e "$GENE\tPossible contamination or HGT\tNA\t$PROPORTIONSTRATA" >> ${OUTDIR}/${QTAXID}_gene_ages.tsv
 
 					# Create a list of possible assignable phylostrata for these ambiguous genes
-					echo -e "$GENE\t${ARRAY[@]}" | sed 's/,$//' >> ${QTAXID}_ambiguous_phylostrata.tsv
+					echo -e "$GENE\t${ARRAY[@]}" | sed 's/,$//' >> ${OUTDIR}/${QTAXID}_ambiguous_phylostrata.tsv
 				fi
 
 				break
 
 			# If the search for matching phylostrata doesn't reach a consesnsus at the oldest phylostratum, then assign the gene as putatively viral (this is no longer supposed to happen, but I kept it to avoid infinite loops).
 			elif [ $PHYLONUM == $COUNTER ]; then
-				echo -e "$GENE\tERROR IN PHYLOSTRATUM ASSIGNMENT, PLEASE CHECK FOR ANY INCONSISTENCIES IN THE \"ncbi_lineages\" FILE\tNA\tNA" >> ${QTAXID}_gene_ages.tsv
+				echo -e "$GENE\tERROR IN PHYLOSTRATUM ASSIGNMENT, PLEASE CHECK FOR ANY INCONSISTENCIES IN THE \"ncbi_lineages\" FILE\tNA\tNA" >> ${OUTDIR}/${QTAXID}_gene_ages.tsv
 				echo -e "ERROR IN PHYLOSTRATUM ASSIGNMENT OF $GENE, PLEASE CHECK FOR ANY INCONSISTENCIES IN THE \"ncbi_lineages\" FILE"
 				break
 
@@ -164,9 +174,9 @@ for GENE in $(cat ${TMP_PATH}/tmp_gene_list); do
 
 	else
 
-		echo -e "$GENE\tAbsent from the DIAMOND/MMseqs2 results\tNA\tNA" >> ${QTAXID}_gene_ages.tsv
+		echo -e "$GENE\tAbsent from the DIAMOND/MMseqs2 results\tNA\tNA" >> ${OUTDIR}/${QTAXID}_gene_ages.tsv
 		if [[ "${PRINTOLDEST}" = "true" ]]; then
-			echo -e "$GENE\tno_matches\tNA\tNA\tNA\tNA\tNA">> ${QTAXID}_deepest_homolog.tsv
+			echo -e "$GENE\tno_matches\tNA\tNA\tNA\tNA\tNA">> ${OUTDIR}/${QTAXID}_deepest_homolog.tsv
 		fi
 	fi
 
@@ -207,7 +217,7 @@ for GENE in $(cat ${TMP_PATH}/tmp_gene_list); do
 		        }
 		        print str
 		    }
-		}' ${TMP_PATH}/tmp_${QTAXID}_${GENE}_bitscore.tsv | sed 's/ /\t/g' >> ${QTAXID}_bitscores.tsv
+		}' ${TMP_PATH}/tmp_${QTAXID}_${GENE}_bitscore.tsv | sed 's/ /\t/g' >> ${OUTDIR}/${QTAXID}_bitscores.tsv
 
 		rm ${TMP_PATH}/tmp_${QTAXID}_${GENE}_bitscore.tsv
 
