@@ -4,7 +4,8 @@ Introduction
 ============
 
 GenEra is an easy-to-use and highly customizable command-line tool that estimates gene-family founder events (i.e., the age of the last common ancestor of protein-coding gene families) through the reimplementation of genomic phylostratigraphy (Domazet-Lošo et al., 2007). GenEra takes advantage of [DIAMOND](https://github.com/bbuchfink/diamond "DIAMOND")’s speed and sensitivity to search for homolog genes throughout the entire NR database, and combines these results with the [NCBI Taxonomy](https://www.ncbi.nlm.nih.gov/taxonomy "NCBI Taxonomy") to assign an origination date for each gene and gene family in a query species. GenEra can also incorporate protein data from external sources to enrich the analysis, it can search for proteins within nucleotide data (i.e., genome/transcriptome assemblies) using [MMseqs2](https://github.com/soedinglab/MMseqs2 "MMseqs2") to improve the classification of orphan genes, and it calculates a taxonomic representativeness score to assess the reliability of assigning a gene to a specific age. Additionally, GenEra can calculate homology detection failure probabilities using [abSENSE](https://github.com/caraweisman/abSENSE "abSENSE") to help distinguish fast-evolving genes from high-confidence gene-family founder events. 
-As fo v1.1.0, users can now use Foldseek to search protein structural predictions against the AlphaFold DB for sensitive structural alignments. Alternatively, the user can choose to perform a reassessment of gene ages by running jackhmmer on top of DIAMOND (be aware, jackhmmer runs very slowly). 
+
+As of v1.1.0, users can now use Foldseek to search protein structural predictions against the AlphaFold DB for sensitive structural alignments. Alternatively, the user can choose to perform a reassessment of gene ages by running jackhmmer on top of DIAMOND (be aware, jackhmmer runs very slowly). 
 
 Contents
 ========
