@@ -83,7 +83,7 @@ for (GENE_ID in SUBSET_IDS) {
     {
       message("")
       message("   WARNING: Skipping the following sequence due to jackhmmer error:")
-      QUERYSEQ
+      print(QUERYSEQ)
       message("")
       next
     }
