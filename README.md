@@ -1,3 +1,8 @@
+
+
+[![stable](http://badges.github.io/stability-badges/dist/stable.svg)](http://github.com/badges/stability-badges) [![DOI](https://zenodo.org/badge/483209866.svg)](https://zenodo.org/badge/latestdoi/483209866)
+
+
 ![GenEra](https://github.com/josuebarrera/GenEra/blob/main/logo.png)
 
 Introduction
