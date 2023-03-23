@@ -58,6 +58,10 @@ pip install -U ncbitax2lin
 conda install -c conda-forge -c bioconda mmseqs2
 conda install -c conda-forge -c bioconda foldseek
 conda install -c anaconda scipy
+conda install -c bioconda r-seqinr
+conda install -c bioconda r-optparse
+conda install -c bioconda r-bio3d
+conda install -c r r-tidyverse
 CONDABIN=$(which ncbitax2lin | sed 's/ncbitax2lin//g') && mv genEra ${CONDABIN} && mv Erassignment ${CONDABIN} && mv Run_abSENSE.py ${CONDABIN}
 ```
 Otherwise, you can install the dependencies independently and then include genEra, Erassignment and hmmEra to your PATH.
