@@ -48,7 +48,7 @@ For an easy [conda](https://docs.conda.io/en/latest/ "conda") installation, copy
 
 ```console
 git clone https://github.com/josuebarrera/GenEra.git && cd GenEra
-chmod +x genEra && chmod +x Erassignment
+chmod +x genEra && chmod +x Erassignment && chmod +x hmmEra
 git clone https://github.com/caraweisman/abSENSE.git && mv abSENSE/Run_abSENSE.py . && chmod +x Run_abSENSE.py
 conda create -n genEra python=3.7
 conda activate genEra
@@ -62,7 +62,7 @@ conda install -c bioconda r-seqinr
 conda install -c bioconda r-optparse
 conda install -c bioconda r-bio3d
 conda install -c r r-tidyverse
-CONDABIN=$(which ncbitax2lin | sed 's/ncbitax2lin//g') && mv genEra ${CONDABIN} && mv Erassignment ${CONDABIN} && mv Run_abSENSE.py ${CONDABIN}
+CONDABIN=$(which ncbitax2lin | sed 's/ncbitax2lin//g') && mv genEra ${CONDABIN} && mv Erassignment ${CONDABIN} && mv Run_abSENSE.py ${CONDABIN} && mv hmmEra ${CONDABIN}
 ```
 Otherwise, you can install the dependencies independently and then include genEra, Erassignment and hmmEra to your PATH.
 
