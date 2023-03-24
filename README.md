@@ -44,7 +44,10 @@ Additionally, GenEra requires internet connection, access to the taxonomy dump f
 Installation
 ============
 
-For an easy [conda](https://docs.conda.io/en/latest/ "conda") installation, copy and paste this in your terminal ([conda](https://docs.conda.io/en/latest/ "conda") should already be installed in your machine):
+__NOTE: We will release a Docker container and a single-command conda installation soon!!!__
+
+
+For manual [conda](https://docs.conda.io/en/latest/ "conda") installation, copy and paste this in your terminal ([conda](https://docs.conda.io/en/latest/ "conda") should already be installed in your machine):
 
 ```console
 git clone https://github.com/josuebarrera/GenEra.git && cd GenEra
@@ -67,8 +70,6 @@ CONDABIN=$(which ncbitax2lin | sed 's/ncbitax2lin//g') && mv genEra ${CONDABIN} 
 Otherwise, you can install the dependencies independently and then include genEra, Erassignment and hmmEra to your PATH.
 
 If you're planning to use the JackHMMER reassessment, you'll also need to manually install all the R dependencies meantioned above.
-
-We will also release a Docker container soon!!!
 
 Once you finished, you can test whether genEra was installed correctly by running:
 
