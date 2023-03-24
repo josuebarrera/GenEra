@@ -47,7 +47,7 @@ Installation
 __NOTE: We will release a Docker container and a single-command conda installation soon!!!__
 
 
-For manual [conda](https://docs.conda.io/en/latest/ "conda") installation, copy and paste this in your terminal ([conda](https://docs.conda.io/en/latest/ "conda") should already be installed in your machine):
+For a manual [conda](https://docs.conda.io/en/latest/ "conda") installation, copy and paste this in your terminal ([conda](https://docs.conda.io/en/latest/ "conda") should already be installed in your machine):
 
 ```console
 git clone https://github.com/josuebarrera/GenEra.git && cd GenEra
@@ -67,9 +67,6 @@ conda install -c bioconda r-bio3d
 conda install -c r r-tidyverse
 CONDABIN=$(which ncbitax2lin | sed 's/ncbitax2lin//g') && mv genEra ${CONDABIN} && mv Erassignment ${CONDABIN} && mv Run_abSENSE.py ${CONDABIN} && mv hmmEra ${CONDABIN}
 ```
-Otherwise, you can install the dependencies independently and then include genEra, Erassignment and hmmEra to your PATH.
-
-If you're planning to use the JackHMMER reassessment, you'll also need to manually install all the R dependencies meantioned above.
 
 Once you finished, you can test whether genEra was installed correctly by running:
 
