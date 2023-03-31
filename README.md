@@ -55,7 +55,7 @@ chmod +x genEra && chmod +x Erassignment && chmod +x hmmEra
 git clone https://github.com/caraweisman/abSENSE.git && mv abSENSE/Run_abSENSE.py . && chmod +x Run_abSENSE.py
 conda create -n genEra python=3.7
 conda activate genEra
-conda install -c bioconda diamond
+conda install -c bioconda -c conda-forge diamond
 conda install -c bioconda mcl
 pip install -U ncbitax2lin
 conda install -c conda-forge -c bioconda mmseqs2
