@@ -1,6 +1,6 @@
 #!/bin/bash
 
-### genEra v1.1.0 (C) Max Planck Society for the Advancement of Science
+### genEra v1.1.1 (C) Max Planck Society for the Advancement of Science
 ###
 ### Code developed by Josue Barrera-Redondo <josue.barrera@tuebingen.mpg.de>
 ###
@@ -14,7 +14,7 @@
 ### MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ### GNU General Public License for more details.
 
-VERSION='1.1.0'
+VERSION='1.1.1'
 
 QUERY_FASTA=''
 QUERY_PDB=''
@@ -233,6 +233,12 @@ if [[ -z ${TMP_PATH} ]]; then
 	mkdir tmp_${NCBITAX}_${RANDOMSEED} && cd tmp_${NCBITAX}_${RANDOMSEED}
 	TMP_PATH=$(pwd)
 	cd ../
+else
+	RANDOMSEED=$(echo $RANDOM)
+	RUNNINGPATH=$(pwd)
+	cd ${TMP_PATH} && mkdir tmp_${NCBITAX}_${RANDOMSEED} && cd tmp_${NCBITAX}_${RANDOMSEED}
+	TMP_PATH=$(pwd)
+	cd ${RUNNINGPATH}
 fi
 
 echo
@@ -826,12 +832,12 @@ else
 			awk -F'"' -v OFS='' '{ for (i=2; i<=NF; i+=2) gsub(",", "", $i) } 1' ${RAWTAX} | awk -F "," -v LINEAGECOL="$LINEAGECOL" '{ print $LINEAGECOL }' | paste -d , - ${PRINTCOLUMN} > ${TMP_PATH}/tmp_column_${LINEAGECOL}
 			PRINTCOLUMN="${TMP_PATH}/tmp_column_${LINEAGECOL}"
 		done
-		awk -F'"' -v OFS='' '{ for (i=2; i<=NF; i+=2) gsub(",", "", $i) } 1' ${RAWTAX} | awk -F "," '{ print $1 }' | paste -d , - ${PRINTCOLUMN} | sed 's/,$//' > ${TMP_PATH}/tmp_arranged_${RAWTAX}
+		awk -F'"' -v OFS='' '{ for (i=2; i<=NF; i+=2) gsub(",", "", $i) } 1' ${RAWTAX} | awk -F "," '{ print $1 }' | paste -d , - ${PRINTCOLUMN} | sed 's/,$//' > ${TMP_PATH}/tmp_arranged_${NCBITAX}_ncbi_lineages
 
 		rm wwwtax* ${TMP_PATH}/tmp_column_*
 
 		# Extract the philostrata corresponding to the query organism
-		QPHYLOS=$(awk -F "," -v NCBITAX="$NCBITAX" '{ if ($1 == NCBITAX) print $0 }' ${TMP_PATH}/tmp_arranged_${RAWTAX})
+		QPHYLOS=$(awk -F "," -v NCBITAX="$NCBITAX" '{ if ($1 == NCBITAX) print $0 }' ${TMP_PATH}/tmp_arranged_${NCBITAX}_ncbi_lineages)
 
 		# Extract all the lineages proteins that matched the query sequences under a certain threshold and that belong to the same oldest lineage of the query species (e.g., "cellular organisms")
 		if [[ -f $QUERY_FASTA ]]; then
@@ -846,7 +852,7 @@ else
 		echo "Extracting all the lineages that match more than ${MINHITS} percent of your query proteins"
 
 		HITPERC=$(( ${GENENUM}*${MINHITS}/100 ))
-		awk '{ print $NF }' ${DIAMONDOUT} | sort -n -T ${TMP_PATH} | uniq -c | awk -v HITPERC="$HITPERC" '{ if ($1 >= HITPERC) print $2 }' | sed '/^[[:space:]]*$/d' | awk -F "," 'FNR==NR{ a[$1]=$0;next } ($1 in a)' - ${TMP_PATH}/tmp_arranged_${RAWTAX} | grep "$OLDEST" > ${TMP_PATH}/tmp_${NCBITAX}_matches
+		awk '{ print $NF }' ${DIAMONDOUT} | sort -n -T ${TMP_PATH} | uniq -c | awk -v HITPERC="$HITPERC" '{ if ($1 >= HITPERC) print $2 }' | sed '/^[[:space:]]*$/d' | awk -F "," 'FNR==NR{ a[$1]=$0;next } ($1 in a)' - ${TMP_PATH}/tmp_arranged_${NCBITAX}_ncbi_lineages | grep "$OLDEST" > ${TMP_PATH}/tmp_${NCBITAX}_matches
 
 		# Finally, tailor the taxonomic database for the query species with the phylostrata that are useful for the analysis
 		COUNTER=2
@@ -883,19 +889,19 @@ else
 		echo "--------------------------------------------------"
 		echo "Generating the species-tailored database"
 
-		awk -F "," '{ print $1 }' ${TMP_PATH}/tmp_arranged_${RAWTAX} > ${TMP_PATH}/tmp_${NCBITAX}_${RAWTAX}
-		PRINTCOLUMN="${TMP_PATH}/tmp_${NCBITAX}_${RAWTAX}"
+		awk -F "," '{ print $1 }' ${TMP_PATH}/tmp_arranged_${NCBITAX}_ncbi_lineages > ${TMP_PATH}/tmp_${NCBITAX}_ncbi_lineages.csv
+		PRINTCOLUMN="${TMP_PATH}/tmp_${NCBITAX}_ncbi_lineages.csv"
 
 		for LEVEL in $(echo $ARRAY | sed "s/,/\n/g" | sed '/^[[:space:]]*$/d'); do
-			awk -F "," -v LEVEL="$LEVEL" '{ print $LEVEL }' ${TMP_PATH}/tmp_arranged_${RAWTAX} | paste -d , ${PRINTCOLUMN} - > ${TMP_PATH}/tmp_column_${LEVEL}
+			awk -F "," -v LEVEL="$LEVEL" '{ print $LEVEL }' ${TMP_PATH}/tmp_arranged_${NCBITAX}_ncbi_lineages | paste -d , ${PRINTCOLUMN} - > ${TMP_PATH}/tmp_column_${LEVEL}
 			PRINTCOLUMN="${TMP_PATH}/tmp_column_${LEVEL}"
 		done
 
-		cat ${PRINTCOLUMN} > ${OUTDIR}/${NCBITAX}_${RAWTAX}
+		cat ${PRINTCOLUMN} > ${OUTDIR}/${NCBITAX}_ncbi_lineages.csv
 
-		rm ${TMP_PATH}/tmp_arranged_${RAWTAX} ${TMP_PATH}/tmp_${NCBITAX}_${RAWTAX} ${TMP_PATH}/tmp_${NCBITAX}_trimmed_matches ${TMP_PATH}/tmp_${NCBITAX}_matches ${TMP_PATH}/tmp_column_*
+		rm ${TMP_PATH}/tmp_arranged_${NCBITAX}_ncbi_lineages ${TMP_PATH}/tmp_${NCBITAX}_ncbi_lineages.csv ${TMP_PATH}/tmp_${NCBITAX}_trimmed_matches ${TMP_PATH}/tmp_${NCBITAX}_matches ${TMP_PATH}/tmp_column_*
 
-		CUSTOMTAX="${OUTDIR}/${NCBITAX}_${RAWTAX}"
+		CUSTOMTAX="${OUTDIR}/${NCBITAX}_ncbi_lineages.csv"
 
 	else
 
@@ -905,10 +911,10 @@ else
 		echo "  This may result in the loss of some phylostrata from the species-tailored database"
 
 		# Eliminate the inner commas from some of the taxa in the raw file and arrange the lineages by taxonomic hierarchies
-		awk -F'"' -v OFS='' '{ for (i=2; i<=NF; i+=2) gsub(",", "", $i) } 1' ${RAWTAX} | awk -F "," '{ print $1","$8","$52","$51","$57","$7","$63","$68","$56","$6","$65","$45","$36","$59","$5","$66","$55","$30","$35","$54","$4","$64","$60","$3","$67","$58","$38","$2","$40 }' > ${TMP_PATH}/tmp_arranged_${RAWTAX}
+		awk -F'"' -v OFS='' '{ for (i=2; i<=NF; i+=2) gsub(",", "", $i) } 1' ${RAWTAX} | awk -F "," '{ print $1","$8","$52","$51","$57","$7","$63","$68","$56","$6","$65","$45","$36","$59","$5","$66","$55","$30","$35","$54","$4","$64","$60","$3","$67","$58","$38","$2","$40 }' > ${TMP_PATH}/tmp_arranged_${NCBITAX}_ncbi_lineages
 
 		# Extract the philostrata corresponding to the query organism
-		QPHYLOS=$(awk -F "," -v NCBITAX="$NCBITAX" '{ if ($1 == NCBITAX) print $0 }' ${TMP_PATH}/tmp_arranged_${RAWTAX})
+		QPHYLOS=$(awk -F "," -v NCBITAX="$NCBITAX" '{ if ($1 == NCBITAX) print $0 }' ${TMP_PATH}/tmp_arranged_${NCBITAX}_ncbi_lineages)
 
 		# Extract all the lineages proteins that matched the query sequences under a certain threshold and that belong to the same oldest lineage of the query species (e.g., "cellular organisms")
 		if [[ -f $QUERY_FASTA ]]; then
@@ -920,7 +926,7 @@ else
 		OLDEST=$(echo $QPHYLOS | awk -F "," '{ print $NF }')
 
 		HITPERC=$(( ${GENENUM}*${MINHITS}/100 ))
-		awk '{ print $NF }' ${DIAMONDOUT} | sort -n -T ${TMP_PATH} | uniq -c | awk -v HITPERC="$HITPERC" '{ if ($1 >= HITPERC) print $2 }' | sed '/^[[:space:]]*$/d' | awk -F "," 'FNR==NR{ a[$1]=$0;next } ($1 in a)' - ${TMP_PATH}/tmp_arranged_${RAWTAX} | grep "$OLDEST" > ${TMP_PATH}/tmp_${NCBITAX}_matches
+		awk '{ print $NF }' ${DIAMONDOUT} | sort -n -T ${TMP_PATH} | uniq -c | awk -v HITPERC="$HITPERC" '{ if ($1 >= HITPERC) print $2 }' | sed '/^[[:space:]]*$/d' | awk -F "," 'FNR==NR{ a[$1]=$0;next } ($1 in a)' - ${TMP_PATH}/tmp_arranged_${NCBITAX}_ncbi_lineages | grep "$OLDEST" > ${TMP_PATH}/tmp_${NCBITAX}_matches
 
 		#Evaluate the existance of unassignable clades in the database
 		MISSINGSTRATA=()
@@ -983,20 +989,20 @@ else
 		echo "--------------------------------------------------"
 		echo "Generating the species-tailored database"
 
-		awk -F "," '{ print $1 }' ${TMP_PATH}/tmp_arranged_${RAWTAX} > ${TMP_PATH}/tmp_${NCBITAX}_${RAWTAX}
-		PRINTCOLUMN="${TMP_PATH}/tmp_${NCBITAX}_${RAWTAX}"
+		awk -F "," '{ print $1 }' ${TMP_PATH}/tmp_arranged_${NCBITAX}_ncbi_lineages > ${TMP_PATH}/tmp_${NCBITAX}_ncbi_lineages.csv
+		PRINTCOLUMN="${TMP_PATH}/tmp_${NCBITAX}_ncbi_lineages.csv"
 
 		for LEVEL in $(echo $ARRAY | sed "s/,/\n/g" | sed '/^[[:space:]]*$/d'); do
 
-			awk -F "," -v LEVEL="$LEVEL" '{ print $LEVEL }' ${TMP_PATH}/tmp_arranged_${RAWTAX} | paste -d , ${PRINTCOLUMN} - > ${TMP_PATH}/tmp_column_${LEVEL}
+			awk -F "," -v LEVEL="$LEVEL" '{ print $LEVEL }' ${TMP_PATH}/tmp_arranged_${NCBITAX}_ncbi_lineages | paste -d , ${PRINTCOLUMN} - > ${TMP_PATH}/tmp_column_${LEVEL}
 			PRINTCOLUMN="${TMP_PATH}/tmp_column_${LEVEL}"
 		done
 
-		cat ${PRINTCOLUMN} > ${OUTDIR}/${NCBITAX}_${RAWTAX}
+		cat ${PRINTCOLUMN} > ${OUTDIR}/${NCBITAX}_ncbi_lineages.csv
 
-		rm ${TMP_PATH}/tmp_arranged_${RAWTAX} ${TMP_PATH}/tmp_${NCBITAX}_${RAWTAX} ${TMP_PATH}/tmp_${NCBITAX}_trimmed_matches ${TMP_PATH}/tmp_${NCBITAX}_matches ${TMP_PATH}/tmp_column_* ${TMP_PATH}/tmp_missingtaxa_${NCBITAX}
+		rm ${TMP_PATH}/tmp_arranged_${NCBITAX}_ncbi_lineages ${TMP_PATH}/tmp_${NCBITAX}_ncbi_lineages.csv ${TMP_PATH}/tmp_${NCBITAX}_trimmed_matches ${TMP_PATH}/tmp_${NCBITAX}_matches ${TMP_PATH}/tmp_column_* ${TMP_PATH}/tmp_missingtaxa_${NCBITAX}
 
-		CUSTOMTAX="${OUTDIR}/${NCBITAX}_${RAWTAX}"
+		CUSTOMTAX="${OUTDIR}/${NCBITAX}_ncbi_lineages.csv"
 
 	fi
 
