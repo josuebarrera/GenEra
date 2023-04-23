@@ -36,7 +36,7 @@ if [[ -z ${PHYLOSCRIPT} ]]; then
 fi
 
 
-if grep -q "YBR238C	XP_033764827.1	0.0	1350	27291" tmp_test/559292_Diamond_results.bout; then
+if grep -q "YBR238C	XP_033764827.1	0.0	1350	27291" tmp_test/tmp_559292_*/559292_Diamond_results.bout; then
 	echo "STEP 1: PASSED"
 else
 	echo "STEP 1: FAILED"
@@ -48,7 +48,7 @@ else
 	exit 1
 fi
 
-if grep -q "1071382,Kazachstania africana CBS 2517,Kazachstania,Saccharomycetaceae,Saccharomycetales,saccharomyceta" 559292_test_ncbi_lineages.csv; then
+if grep -q "1071382,Kazachstania africana CBS 2517,Kazachstania,Saccharomycetaceae,Saccharomycetales,saccharomyceta" 559292_ncbi_lineages.csv; then
 	echo "STEP 2: PASSED"
 elif grep -q "ERROR: genEra was unable to download the lineage information of your query species from the NCBI webpage" log; then
 	echo "STEP 2: WARNING"
