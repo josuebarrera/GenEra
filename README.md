@@ -44,10 +44,19 @@ Additionally, GenEra requires internet connection, access to the taxonomy dump f
 Installation
 ============
 
-__NOTE: We will release a Docker container and a single-command conda installation soon!!!__
+### Docker installation
 
+A [docker](https://www.docker.com/ "docker") image can be pulled using the following command:
 
-For a manual [conda](https://docs.conda.io/en/latest/ "conda") installation, copy and paste this in your terminal ([conda](https://docs.conda.io/en/latest/ "conda") should already be installed in your machine):
+```console
+docker pull josuebarrera/genera
+```
+
+### Conda installation
+
+__NOTE: We will release a single-command conda installation soon!!!__
+
+For a manual [conda](https://docs.conda.io/en/latest/ "conda") installation, copy and paste this in your terminal:
 
 ```console
 git clone https://github.com/josuebarrera/GenEra.git && cd GenEra
