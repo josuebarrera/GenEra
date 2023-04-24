@@ -285,14 +285,28 @@ The paper describing the method implemented in GenEra:
 ```console
 Barrera-Redondo, J., Lotharukpong, J.S., Drost, H.G., Coelho, S.M. (2023). Uncovering gene-family founder events during major evolutionary transitions in animals, plants and fungi using GenEra. Genome Biology, 24, 54. https://doi.org/10.1186/s13059-023-02895-z
 ```
-GenEra makes use of several dependencies that should also be cited, if implemented within the pipeline:
+GenEra makes use of several dependencies that should also be cited, if implemented within the pipeline.
+
+For a standard run:
 ```console
 Buchfink, B., Reuter, K., Drost, H.G. (2021). Sensitive protein alignments at tree-of-life scale using DIAMOND. Nature methods, 18(4), 366-368.
-Steinegger, M., Söding, J. (2017). MMseqs2 enables sensitive protein sequence searching for the analysis of massive data sets. Nature biotechnology, 35(11), 1026-1028.
 Enright, A.J., Van Dongen, S., Ouzounis, C.A. (2002). An efficient algorithm for large-scale detection of protein families. Nucleic acids research, 30(7), 1575-1584.
+```
+When implementing protein-against-genome alignments: 
+```console
+Steinegger, M., Söding, J. (2017). MMseqs2 enables sensitive protein sequence searching for the analysis of massive data sets. Nature biotechnology, 35(11), 1026-1028.
+```
+If using homology detection failure probabilities:
+```console
 Weisman, C.M., Murray, A.W., Eddy, S.R. (2020). Many, but not all, lineage-specific genes can be explained by homology detection failure. PLoS biology, 18(11), e3000862.
+```
+When using structural alignments:
+```console
 van Kempen, M., Kim, S., Tumescheit, C., Mirdita, M., Söding, J., & Steinegger, M. (2022). Foldseek: fast and accurate protein structure search. bioRxiv.
 Varadi, M., Anyango, S., Deshpande, M., Nair, S., Natassia, C., Yordanova, G., ... & Velankar, S. (2022). AlphaFold Protein Structure Database: massively expanding the structural coverage of protein-sequence space with high-accuracy models. Nucleic acids research, 50(D1), D439-D444.
+```
+Finally, if using HMMER on top of the standard analysis:
+```console
 Grant, B. J., Rodrigues, A. P., ElSawy, K. M., McCammon, J. A., & Caves, L. S. (2006). Bio3d: an R package for the comparative analysis of protein structures. Bioinformatics, 22(21), 2695-2696.
 Finn, R. D., Clements, J., & Eddy, S. R. (2011). HMMER web server: interactive sequence similarity searching. Nucleic acids research, 39(suppl_2), W29-W37.
 Charif, D., & Lobry, J. R. (2007). SeqinR 1.0-2: a contributed package to the R project for statistical computing devoted to biological sequences retrieval and analysis. In Structural approaches to sequence evolution (pp. 207-232). Springer, Berlin, Heidelberg.
