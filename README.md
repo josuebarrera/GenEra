@@ -46,7 +46,7 @@ Installation
 
 ### Docker installation
 
-A [docker](https://www.docker.com/ "docker") image can be pulled using the following command:
+A [docker image](https://hub.docker.com/r/josuebarrera/genera "docker image") can be pulled using the following command:
 
 ```console
 docker pull josuebarrera/genera
