@@ -166,9 +166,9 @@ Arguments and input files
 
 ### Depending on which alignment method you want to use, you'll have to choose between these two input files:
 
--  `-q` &nbsp;&nbsp;&nbsp; A standard FASTA file containing all the protein sequences of your species of interest. Make sure all your sequence headers are unique and simple (e.g., the headers shouldn't contain regular expressions like `\t` or `\n`).
+-  `-q` &nbsp;&nbsp;&nbsp; A standard FASTA file containing all the protein sequences of your species of interest. Make sure all your sequence headers are unique and make sure to avoid regular expressions like `\t` or `\n` in the sequence headers, as these will mess up the pipeline.
 
--  `-Q` &nbsp;&nbsp;&nbsp; A directory containing all the protein structural predictions of your species of interest in PDB format. Make sure that all your PDB files have unique names and that they are uncompressed.
+-  `-Q` &nbsp;&nbsp;&nbsp; A directory containing all the protein structural predictions of your species of interest in PDB format. Make sure that all your PDB files have unique names and that they are uncompressed. Also make sure to avoid regular expressions like `\t` or `\n` in the PDB file names, as these will mess up the pipeline.
 
 ### Additionally, GenEra requires one of the following three database files:
 
