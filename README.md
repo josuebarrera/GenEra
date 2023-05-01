@@ -166,7 +166,7 @@ Arguments and input files
 
 ### Depending on which alignment method you want to use, you'll have to choose between these two input files:
 
--  `-q` &nbsp;&nbsp;&nbsp; A standard FASTA file containing all the protein sequences of your species of interest. Make sure all your sequence headers are unique.
+-  `-q` &nbsp;&nbsp;&nbsp; A standard FASTA file containing all the protein sequences of your species of interest. Make sure all your sequence headers are unique and simple (e.g., the headers shouldn't contain regular expressions like `\t` or `\n`).
 
 -  `-Q` &nbsp;&nbsp;&nbsp; A directory containing all the protein structural predictions of your species of interest in PDB format. Make sure that all your PDB files have unique names and that they are uncompressed.
 
