@@ -46,10 +46,14 @@ Installation
 
 ### Docker installation
 
-A [docker image](https://hub.docker.com/r/josuebarrera/genera "docker image") can be pulled using the following command:
+A [Docker image](https://hub.docker.com/r/josuebarrera/genera "docker image") can be pulled using the following command:
 
 ```console
 docker pull josuebarrera/genera
+```
+GenEra can then be used through Docker by running the following command: 
+```console
+docker run --rm -v $(pwd):/working-dir -w /working-dir josuebarrera/genera genEra -q [query_sequences.fasta] -t [query_taxid] -b [path/to/nr] -d [path/to/taxdump]
 ```
 
 ### Conda installation
