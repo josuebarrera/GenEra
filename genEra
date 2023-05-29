@@ -812,7 +812,7 @@ else
 
 	# Download the lineage hierarchy of the query species from the NCBI webpage (in case fullnamelineage.dmp is not found)
 	if [[ ! -f ${TAXDUMP}/fullnamelineage.dmp ]]; then
-		echo "  WARNING: genEra could notfind the file fullnamelineage.dmp within the NCBI taxdump"
+		echo "  WARNING: genEra could not find the file fullnamelineage.dmp within the NCBI taxdump"
 		echo "  Please make sure you download the latest version of the NCBI Taxonomy dump: ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz"
 		wget -q "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=${NCBITAX}&lvl=3&p=has_linkout&p=blast_url&p=genome_blast&lin=f&keep=1&srchmode=1&unlock"
 	fi
@@ -1004,7 +1004,7 @@ else
 	else
 
 		echo "--------------------------------------------------"
-		echo "  ERROR: genEra was unable to retrieve the lineage information of your query species from the NCBI Taxonomy files (taxdump) or from the NCBI webpage"
+		echo "  ERROR: genEra was unable to retrieve the lineage information of your query species from the local NCBI taxdump or from the NCBI webpage"
 		echo "  genEra will attempt to organize the phylostrata in the correct taxonomic hierarchy"
 		echo "  This may result in the loss of some phylostrata from the species-tailored database"
 
