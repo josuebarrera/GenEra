@@ -39,7 +39,7 @@ GenEra requires the following software dependencies:
 -	[NumPy](https://numpy.org/ "NumPy") and [SciPy](https://scipy.org/ "SciPy") (needed to run abSENSE in step 4)
 -	[R](https://www.r-project.org/ "R") alongside the libraries [optparse](https://cran.r-project.org/web/packages/optparse/index.html "optparse"), [Bio3D](http://thegrantlab.org/bio3d/ "Bio3D"), [Tidyverse](https://www.tidyverse.org/ "Tidyverse"), and [SeqinR](https://cran.r-project.org/web/packages/seqinr/index.html "SeqinR") (optional for JackHMMER reassessment)
 
-Additionally, GenEra requires internet connection, access to the taxonomy dump from the NCBI, and either a locally installed NR database for DIAMOND or a locally installed AlphaFold database for Foldseek.
+Additionally, GenEra requires access to the taxonomy dump from the NCBI and either a locally installed NR database for DIAMOND or a locally installed AlphaFold database for Foldseek.
 
 Installation
 ============
