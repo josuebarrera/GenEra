@@ -825,14 +825,12 @@ else
 		for LINEAGE in $(awk -F "|" -v NCBITAX="$NCBITAX" '{ if ($1 == NCBITAX) print $3 }' ${TAXDUMP}/fullnamelineage.dmp | sed 's/\t//g' | sed 's/; /\n/g' | sed '/^[[:space:]]*$/d' | grep -v "incertae sedis"); do
 			LINEAGE_ARRAY+=($(echo ${QPHYLOS} | sed -n $'1s/,/\\\n/gp' | grep -nx "$LINEAGE" | cut -d: -f1 && echo))
 		done
-		TOP_LEVEL=$(awk -F "|" -v NCBITAX="$NCBITAX" '{ if ($1 == NCBITAX) print $2 }' fullnamelineage.dmp | sed 's/\t//g')
+		TOP_LEVEL=$(awk -F "|" -v NCBITAX="$NCBITAX" '{ if ($1 == NCBITAX) print $2 }' ${TAXDUMP}/fullnamelineage.dmp | sed 's/\t//g')
 		LINEAGE_ARRAY+=($(echo ${QPHYLOS} | sed -n $'1s/,/\\\n/gp' | grep -nx "$TOP_LEVEL" | cut -d: -f1 && echo))
 
 		# Extract the columns in "ncbi_lineages" in the correct hierarchical order
 		touch ${TMP_PATH}/tmp_column_0
 		PRINTCOLUMN="${TMP_PATH}/tmp_column_0"
-
-		echo "${LINEAGE_ARRAY[@]}"
 
 		for LINEAGECOL in "${LINEAGE_ARRAY[@]}"; do
 			awk -F'"' -v OFS='' '{ for (i=2; i<=NF; i+=2) gsub(",", "", $i) } 1' ${RAWTAX} | awk -F "," -v LINEAGECOL="$LINEAGECOL" '{ print $LINEAGECOL }' | paste -d , - ${PRINTCOLUMN} > ${TMP_PATH}/tmp_column_${LINEAGECOL}
