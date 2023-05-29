@@ -105,8 +105,8 @@ wget ftp://ftp.ncbi.nih.gov:21/pub/taxonomy/accession2taxid/prot.accession2taxid
 ```
 Then download the taxonomy dump from the NCBI:
 ```console
-wget -N ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
-mkdir -p taxdump && tar zxf taxdump.tar.gz -C ./taxdump
+wget -N ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz
+mkdir -p taxdump && tar zxf new_taxdump.tar.gz -C ./taxdump
 ```
 Finally, create a local nr database (another huge file):
 ```console
@@ -135,8 +135,8 @@ foldseek databases Alphafold/UniProt alphafoldDB tmp
 ```
 Finally, download the taxonomy dump from the NCBI:
 ```console
-wget -N ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
-mkdir -p taxdump && tar zxf taxdump.tar.gz -C ./taxdump
+wget -N ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz
+mkdir -p taxdump && tar zxf new_taxdump.tar.gz -C ./taxdump
 ```
 
 Quick start for the impatient
