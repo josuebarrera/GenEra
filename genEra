@@ -1,6 +1,6 @@
 #!/bin/bash
 
-### genEra v1.1.1 (C) Max Planck Society for the Advancement of Science
+### genEra v1.2.0 (C) Max Planck Society for the Advancement of Science
 ###
 ### Code developed by Josue Barrera-Redondo <josue.barrera@tuebingen.mpg.de>
 ###
@@ -14,7 +14,7 @@
 ### MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ### GNU General Public License for more details.
 
-VERSION='1.1.1'
+VERSION='1.2.0'
 
 QUERY_FASTA=''
 QUERY_PDB=''
@@ -810,10 +810,108 @@ else
 	# Extract the line in the "ncbi_lineages" file corresponding to the query organism
 	QPHYLOS=$(awk -F "," -v NCBITAX="$NCBITAX" '{ if ($1 == NCBITAX) print $0 }' ${RAWTAX})
 
-	# Download the correct lineage hierarchy of the query species directly from the NCBI webpage
-	wget -q "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=${NCBITAX}&lvl=3&p=has_linkout&p=blast_url&p=genome_blast&lin=f&keep=1&srchmode=1&unlock"
+	# Download the lineage hierarchy of the query species from the NCBI webpage (in case fullnamelineage.dmp is not found)
+	if [[ ! -f ${TAXDUMP}/fullnamelineage.dmp ]]; then
+		echo "  WARNING: genEra could notfind the file fullnamelineage.dmp within the NCBI taxdump"
+		echo "  Please make sure you download the latest version of the NCBI Taxonomy dump: ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz"
+		wget -q "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=${NCBITAX}&lvl=3&p=has_linkout&p=blast_url&p=genome_blast&lin=f&keep=1&srchmode=1&unlock"
+	fi
 
-	if [[ -f wwwtax.cgi\?mode\=Info\&id\=${NCBITAX}\&lvl\=3\&p\=has_linkout\&p\=blast_url\&p\=genome_blast\&lin\=f\&keep\=1\&srchmode\=1\&unlock ]]; then
+	if [[ -f ${TAXDUMP}/fullnamelineage.dmp ]]; then
+
+		echo "Extracting lineage information from ${TAXDUMP}/fullnamelineage.dmp"
+		LINEAGE_ARRAY=()
+		IFS=$'\n'
+		for LINEAGE in $(awk -F "|" -v NCBITAX="$NCBITAX" '{ if ($1 == NCBITAX) print $3 }' ${TAXDUMP}/fullnamelineage.dmp | sed 's/\t//g' | sed 's/; /\n/g' | sed '/^[[:space:]]*$/d' | grep -v "incertae sedis"); do
+			LINEAGE_ARRAY+=($(echo ${QPHYLOS} | sed -n $'1s/,/\\\n/gp' | grep -nx "$LINEAGE" | cut -d: -f1 && echo))
+		done
+		TOP_LEVEL=$(awk -F "|" -v NCBITAX="$NCBITAX" '{ if ($1 == NCBITAX) print $2 }' fullnamelineage.dmp | sed 's/\t//g')
+		LINEAGE_ARRAY+=($(echo ${QPHYLOS} | sed -n $'1s/,/\\\n/gp' | grep -nx "$TOP_LEVEL" | cut -d: -f1 && echo))
+
+		# Extract the columns in "ncbi_lineages" in the correct hierarchical order
+		touch ${TMP_PATH}/tmp_column_0
+		PRINTCOLUMN="${TMP_PATH}/tmp_column_0"
+
+		echo "${LINEAGE_ARRAY[@]}"
+
+		for LINEAGECOL in "${LINEAGE_ARRAY[@]}"; do
+			awk -F'"' -v OFS='' '{ for (i=2; i<=NF; i+=2) gsub(",", "", $i) } 1' ${RAWTAX} | awk -F "," -v LINEAGECOL="$LINEAGECOL" '{ print $LINEAGECOL }' | paste -d , - ${PRINTCOLUMN} > ${TMP_PATH}/tmp_column_${LINEAGECOL}
+			PRINTCOLUMN="${TMP_PATH}/tmp_column_${LINEAGECOL}"
+		done
+		awk -F'"' -v OFS='' '{ for (i=2; i<=NF; i+=2) gsub(",", "", $i) } 1' ${RAWTAX} | awk -F "," '{ print $1 }' | paste -d , - ${PRINTCOLUMN} | sed 's/,$//' > ${TMP_PATH}/tmp_arranged_${NCBITAX}_ncbi_lineages
+
+		rm ${TMP_PATH}/tmp_column_*
+
+		# Extract the philostrata corresponding to the query organism
+		QPHYLOS=$(awk -F "," -v NCBITAX="$NCBITAX" '{ if ($1 == NCBITAX) print $0 }' ${TMP_PATH}/tmp_arranged_${NCBITAX}_ncbi_lineages)
+
+		# Extract all the lineages proteins that matched the query sequences under a certain threshold and that belong to the same oldest lineage of the query species (e.g., "cellular organisms")
+		if [[ -f $QUERY_FASTA ]]; then
+			GENENUM=$(grep -c ">" ${QUERY_FASTA})
+		elif [[ -d $QUERY_PDB ]]; then
+			GENENUM=$(ls ${QUERY_PDB} | wc -l)
+		fi
+
+		OLDEST=$(echo $QPHYLOS | awk -F "," '{ print $NF }')
+
+		echo "--------------------------------------------------"
+		echo "Extracting all the lineages that match more than ${MINHITS} percent of your query proteins"
+
+		HITPERC=$(( ${GENENUM}*${MINHITS}/100 ))
+		awk '{ print $NF }' ${DIAMONDOUT} | sort -n -T ${TMP_PATH} | uniq -c | awk -v HITPERC="$HITPERC" '{ if ($1 >= HITPERC) print $2 }' | sed '/^[[:space:]]*$/d' | awk -F "," 'FNR==NR{ a[$1]=$0;next } ($1 in a)' - ${TMP_PATH}/tmp_arranged_${NCBITAX}_ncbi_lineages | grep "$OLDEST" > ${TMP_PATH}/tmp_${NCBITAX}_matches
+
+		# Finally, tailor the taxonomic database for the query species with the phylostrata that are useful for the analysis
+		COUNTER=2
+
+		echo "--------------------------------------------------"
+		echo "Collapsing the phylostrata that are not represented in your DIAMOND results"
+		cat ${TMP_PATH}/tmp_${NCBITAX}_matches > ${TMP_PATH}/tmp_${NCBITAX}_trimmed_matches
+		ARRAY=()
+		COLLAPSEDSTRATA=()
+
+		IFS=$'\n'
+		for STRATUM in $(echo $QPHYLOS | sed "s/,/\n/g" | tail -n +2); do
+
+			MATCHINGTAXA=$(awk -F "," -v COUNTER="$COUNTER" -v STRATUM="$STRATUM" '{ if ($COUNTER == STRATUM) print $0 }' ${TMP_PATH}/tmp_${NCBITAX}_trimmed_matches | wc -l)
+			if [ "$MATCHINGTAXA" -ge 1 ]; then
+				awk -F "," -v COUNTER="$COUNTER" -v STRATUM="$STRATUM" '{ if ($COUNTER != STRATUM) print $0 }' ${TMP_PATH}/tmp_${NCBITAX}_matches > ${TMP_PATH}/tmp_${NCBITAX}_trimmed_matches
+				ARRAY+=$COUNTER,
+			else
+				COLLAPSEDSTRATA+="[${STRATUM}] "
+			fi
+			let COUNTER+=1
+
+		done
+
+		if [ ${#COLLAPSEDSTRATA[@]} -gt 0 ]; then
+
+			echo "--------------------------------------------------"
+			echo "  WARNING: The following phylostrata were collapsed due to lack of sufficient genomic data:"
+			echo "  $COLLAPSEDSTRATA"
+			echo "  If you want to include them in your analysis, please add the necessary taxa in a custom database (-a or -f), making sure their last common ancestor to the query species can be assigned to that specific taxonomic level in the NCBI taxonomy database"
+
+		fi
+
+		echo "--------------------------------------------------"
+		echo "Generating the species-tailored database"
+
+		awk -F "," '{ print $1 }' ${TMP_PATH}/tmp_arranged_${NCBITAX}_ncbi_lineages > ${TMP_PATH}/tmp_${NCBITAX}_ncbi_lineages.csv
+		PRINTCOLUMN="${TMP_PATH}/tmp_${NCBITAX}_ncbi_lineages.csv"
+
+		for LEVEL in $(echo $ARRAY | sed "s/,/\n/g" | sed '/^[[:space:]]*$/d'); do
+			awk -F "," -v LEVEL="$LEVEL" '{ print $LEVEL }' ${TMP_PATH}/tmp_arranged_${NCBITAX}_ncbi_lineages | paste -d , ${PRINTCOLUMN} - > ${TMP_PATH}/tmp_column_${LEVEL}
+			PRINTCOLUMN="${TMP_PATH}/tmp_column_${LEVEL}"
+		done
+
+		cat ${PRINTCOLUMN} > ${OUTDIR}/${NCBITAX}_ncbi_lineages.csv
+
+		rm ${TMP_PATH}/tmp_arranged_${NCBITAX}_ncbi_lineages ${TMP_PATH}/tmp_${NCBITAX}_ncbi_lineages.csv ${TMP_PATH}/tmp_${NCBITAX}_trimmed_matches ${TMP_PATH}/tmp_${NCBITAX}_matches ${TMP_PATH}/tmp_column_*
+
+		CUSTOMTAX="${OUTDIR}/${NCBITAX}_ncbi_lineages.csv"
+
+	elif [[ -f wwwtax.cgi\?mode\=Info\&id\=${NCBITAX}\&lvl\=3\&p\=has_linkout\&p\=blast_url\&p\=genome_blast\&lin\=f\&keep\=1\&srchmode\=1\&unlock ]]; then
+
+		echo "Extracting lineage information from the NCBI webpage"
 
 		# Create an array which contains the column numbers corresponding to the phylostrata of the query species
 		LINEAGE_ARRAY=()
@@ -906,8 +1004,8 @@ else
 	else
 
 		echo "--------------------------------------------------"
-		echo "  ERROR: genEra was unable to download the lineage information of your query species from the NCBI webpage"
-		echo "  genEra will work offline and attempt to organize the phylostrata in the correct taxonomic hierarchy"
+		echo "  ERROR: genEra was unable to retrieve the lineage information of your query species from the NCBI Taxonomy files (taxdump) or from the NCBI webpage"
+		echo "  genEra will attempt to organize the phylostrata in the correct taxonomic hierarchy"
 		echo "  This may result in the loss of some phylostrata from the species-tailored database"
 
 		# Eliminate the inner commas from some of the taxa in the raw file and arrange the lineages by taxonomic hierarchies
