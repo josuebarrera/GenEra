@@ -7,6 +7,7 @@ gunzip test_DB.dmnd.gz
 
 genEra -q test_seqs.fasta \
  -t 559292 -b test_DB \
+ -d test_taxdump \
  -r test_ncbi_lineages.csv \
  -n 1 -x tmp_test \
  -s test_distances.tsv -i true > log
@@ -50,11 +51,6 @@ fi
 
 if grep -q "1071382,Kazachstania africana CBS 2517,Kazachstania,Saccharomycetaceae,Saccharomycetales,saccharomyceta" 559292_ncbi_lineages.csv; then
 	echo "STEP 2: PASSED"
-elif grep -q "ERROR: genEra was unable to download the lineage information of your query species from the NCBI webpage" log; then
-	echo "STEP 2: WARNING"
-	echo "Your machine does not have internet access"
-	echo "Please make sure to use GenEra with internet connection for optimal results"
-	WARNINGTEST+=1
 else
 	echo "STEP 2: FAILED"
 	echo "Please make sure to follow the github instructions for a correct installation"
