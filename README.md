@@ -2,7 +2,7 @@
 
 [![stable](http://badges.github.io/stability-badges/dist/stable.svg)](http://github.com/badges/stability-badges)
 [![DOI](https://zenodo.org/badge/483209866.svg)](https://zenodo.org/badge/latestdoi/483209866)
-[![Paper link](https://img.shields.io/badge/Published_in-Genome_Biology-badge?labelColor=%23CBE059&color=%231D3050)](https://academic.oup.com/bioinformatics/article/34/9/1589/4772684)
+[![Paper link](https://img.shields.io/badge/Published_in-Genome_Biology-badge?labelColor=%23CBE059&color=%231D3050)](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-023-02895-z)
 
 
 ![GenEra](https://github.com/josuebarrera/GenEra/blob/main/logo.png)
