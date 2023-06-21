@@ -35,10 +35,12 @@ Precomputed gene ages (or 'phylomaps') made using `GenEra` or from previous stud
 Acknowledgement
 =========
 
-We (Josué Barrera-Redondo, Jaruwatana Sodai Lotharukpong & Hajk-Georg Drost) would like to thank several individuals for making this project possible. 
+We ([Josué Barrera-Redondo](https://github.com/josuebarrera), [Jaruwatana Sodai Lotharukpong](https://github.com/LotharukpongJS) & [Hajk-Georg Drost](https://github.com/HajkD)) would like to thank several individuals for making this project possible.
+
 We gratefully thank Susana M. Coelho, the Max Planck Institute for Biology Tübingen and the Max Planck Society for hosting and facilitating this research.
 We thank Caroline M. Weisman for her helpful comments on how to analyze and interpret HDF probabilities of her software [abSENSE](https://github.com/caraweisman/abSENSE).
 We thank the Max Planck Computing and Data Facility for access to and support of the HPC infrastructure, as well as the BMBF-funded de.NBI Cloud within the German Network for Bioinformatics Infrastructure (de.NBI) (031A532B, 031A533A, 031A533B, 031A534A, 031A535A, 031A537A, 031A537B, 031A537C, 031A537D, 031A538A).
+
 Lastly, we are very grateful to Alice Laigle, Erica Dinatale, Laura Piovani, Michael Borg, Alexandra Dallaire and all the early adopters for their testing and feedback.
 
 Funding
