@@ -17,7 +17,7 @@ Introduction
 
 As of v1.1.0, users can now use [Foldseek](https://github.com/steineggerlab/foldseek "Foldseek") to search protein structural predictions against the [AlphaFold DB](https://alphafold.ebi.ac.uk/ "AlphaFold DB") for fast and sensitive structural alignments. Alternatively, the user can choose to perform a reassessment of gene ages by running [JackHMMER](http://hmmer.org/ "JackHMMER") on top of DIAMOND (be aware, this additional step significantly slows down the analysis).
 
-Wiki
+Using GenEra
 =========
 
 We recommend users to consult the `GenEra` [wiki](https://github.com/josuebarrera/GenEra/wiki) for details on [installation](https://github.com/josuebarrera/GenEra/wiki/Installing-GenEra) (via [Conda](https://github.com/josuebarrera/GenEra/wiki/Installing-GenEra#conda-installation) or [Docker](https://github.com/josuebarrera/GenEra/wiki/Installing-GenEra#docker-installation)), [database setup](https://github.com/josuebarrera/GenEra/wiki/Setting-up-the-database(s)) and [how to run `GenEra`](https://github.com/josuebarrera/GenEra/wiki/Running-GenEra), as well as the [output files](https://github.com/josuebarrera/GenEra/wiki/GenEra-output).
