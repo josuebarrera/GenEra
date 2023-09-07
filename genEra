@@ -255,8 +255,9 @@ if [[ -f ${QUERY_FASTA} ]]; then
 	fi
 
 	if [[ ${FASTACHECK} == "gzip" ]]; then
-		zcat < ${QUERY_FASTA} > ${TMP_PATH}/tmp_${NCBITAX}_sequences
-		QUERY_FASTA="${TMP_PATH}/tmp_${NCBITAX}_sequences"
+		FASTA_PREFIX=$(echo "${QUERY_FASTA##*/}" | cut -d. -f1)
+		zcat < ${QUERY_FASTA} > ${TMP_PATH}/${FASTA_PREFIX}.fasta
+		QUERY_FASTA="${TMP_PATH}/${FASTA_PREFIX}.fasta"
 	fi
 
 	QUERYSIZE1=$(grep -c ">" ${QUERY_FASTA})
