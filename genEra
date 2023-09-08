@@ -1350,7 +1350,7 @@ fi
 echo "The possible ages for the genes with a taxonomic representativeness below ${THRESHOLD} percent can be found in ${OUTDIR}/${NCBITAX}_ambiguous_phylostrata.tsv"
 echo "The estimation of gene family founder events can be found in ${OUTDIR}/${NCBITAX}_founder_events.tsv"
 echo "The number of individual genes that could be assigned to each phylostratum are summarized in ${OUTDIR}/${NCBITAX}_gene_age_summary.tsv"
-echo "The number of of gene family founder events per phylostratum are summarized in ${OUTDIR}/${NCBITAX}_founder_summary.txt"
+echo "The number of of gene family founder events per phylostratum are summarized in ${OUTDIR}/${NCBITAX}_founder_summary.tsv"
 
 #######################################################
 ###                 GenEra: STEP 4                  ###
