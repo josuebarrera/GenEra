@@ -1,0 +1,115 @@
+#!/usr/bin/env Rscript
+
+### tree2ncbitax v1.0.0 (C) Max Planck Society for the Advancement of Science
+###
+### Code developed by Josue Barrera-Redondo <josue.barrera@tuebingen.mpg.de>
+###
+### This program is free software: you can redistribute it and/or modify
+### it under the terms of the GNU General Public License as published by
+### the Free Software Foundation, either version 3 of the License, or
+### (at your option) any later version.
+###
+### This program is distributed in the hope that it will be useful,
+### but WITHOUT ANY WARRANTY; without even the implied warranty of
+### MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+### GNU General Public License for more details.
+
+library("optparse")
+
+# Establish input and output arguments for the script
+option_list = list(
+  make_option(c("-i", "--input"), type="character", default=NULL, 
+              help="Name of input NEWICK tree", metavar="file"),
+  make_option(c("-g", "--genome"), type="character", default=NULL, 
+              help="Name of the target genome (the name should match the NEWICK labels)", metavar = "STRING"),
+  make_option(c("-t", "--taxid"), type="integer", default=NULL,
+              help="NCBI taxonomy ID that is shared between all the organims in the phylogeny", metavar="NUM"),
+  make_option(c("-o", "--out"), type="character", default="tree.csv", 
+              help="Output file name [default= %default]", metavar="OUT")
+);
+
+opt_parser = OptionParser(option_list=option_list);
+opt = parse_args(opt_parser);
+
+# Add a couple of error messages if the user forgets to add the necessary input
+if (is.null(opt$input)){
+  message ("")
+  message ("tree2ncbitax: a script to parse NEWICK trees into a table for GenEra")
+  message ("Used to add infraspecies nodes for detailed analysis of putative de novo genes")
+  message ("")
+  print_help(opt_parser)
+  stop("ERROR: Could not find the NEWICK tree", call.=FALSE)
+}
+
+if (is.null(opt$genome)){
+  message ("")
+  message ("tree2ncbitax: a script to parse NEWICK trees into a table for GenEra")
+  message ("Used to add infraspecies nodes for detailed analysis of putative de novo genes")
+  message ("")
+  print_help(opt_parser)
+  stop("ERROR: The user forgot to add the name of the target genome", call.=FALSE)
+}
+
+if (is.null(opt$taxid)){
+  message ("")
+  message ("tree2ncbitax: a script to parse NEWICK trees into a table for GenEra")
+  message ("Used to add infraspecies nodes for detailed analysis of putative de novo genes")
+  message ("")
+  print_help(opt_parser)
+  stop("ERROR: The user forgot to add the NCBI Taxonomy ID ", call.=FALSE)
+}
+
+library("phytools")
+
+# Read NEWICK tree
+INPUT_TREE<-read.tree(file = opt$input)
+
+# Export tree as dataframe
+TREE_TABLE<-as.data.frame(phytools::compute.mr(INPUT_TREE, type = "matrix"))
+
+# Replace standard column names with node names
+original_col_names <- colnames(TREE_TABLE)
+new_col_names <- gsub("V", "Node_", original_col_names)
+colnames(TREE_TABLE) <- new_col_names
+
+# Replace presence values (1) with the name of the nodes
+for (col_name in colnames(TREE_TABLE)) {
+  TREE_TABLE[[col_name]][TREE_TABLE[[col_name]] == 1] <- col_name
+}
+
+# Replace absence values (0) with NAs
+TREE_TABLE[TREE_TABLE == 0] <- NA
+
+# Eliminate the nodes that are not relevant for the target genome
+target_row <- which(rownames(TREE_TABLE) == opt$genome)
+columns_with_na <- which(is.na(TREE_TABLE[target_row, ]))
+TARGET_TABLE <- TREE_TABLE[, -columns_with_na]
+
+# Rearrange the nodes in the dataframe from youngest to oldest in the phylogeny
+na_counts <- colSums(is.na(TARGET_TABLE))
+TARGET_TABLE <- TARGET_TABLE[, order(-na_counts)]
+
+# Rearrange the row names by phylogenetic proximity to the target genome
+na_counts <- rowSums(is.na(TARGET_TABLE))
+SORTED_TABLE <- TARGET_TABLE[order(na_counts), ]
+
+# Put the target genome at the top of the dataframe
+target_row_index <- which(rownames(SORTED_TABLE) == opt$genome)
+SORTED_TABLE <- rbind(SORTED_TABLE[target_row_index, ], SORTED_TABLE[-target_row_index, ])
+
+# Include the genome names as a column in the dataframe
+SORTED_TABLE$Genomes <- rownames(SORTED_TABLE)
+
+# Add a column with modified TAXIDs that will allow us to distinguish each genome in the tree from the rest of the NCBI taxonomy
+num_rows <- nrow(SORTED_TABLE)
+SORTED_TABLE$taxid_column <- paste(opt$taxid, 1:num_rows, sep = "_")
+rownames(SORTED_TABLE) <- NULL
+
+
+# Move the taxids and the genome names in the 1rst and 2nd columns of the dataframe
+FINAL_TABLE <- SORTED_TABLE[, c("taxid_column", "Genomes", names(SORTED_TABLE)[-c(ncol(SORTED_TABLE))])]
+FINAL_TABLE <- FINAL_TABLE[, -ncol(FINAL_TABLE)]
+
+# Save the dataframe as a CSV table
+FINAL_TABLE[is.na(FINAL_TABLE)] <- ""
+write.table(FINAL_TABLE, opt$out, sep = ",", col.names = FALSE, row.names = FALSE, quote = FALSE)
