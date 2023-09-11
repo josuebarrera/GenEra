@@ -435,16 +435,13 @@ elif [[ -f ${QUERY_FASTA} ]]; then
 			#Run Orthofinder to obtain a phylogenetic tree
 			orthofinder -t ${THREADS} -a ${THREADS} -f ${TMP_PATH}/orthofinder -o ${TMP_PATH}/${NCBITAX}_orthofinder_results > ${TMP_PATH}/orthofinder_log_${NCBITAX}
 
-			# Save the Orthofinder rooted tree
+			# Save the Orthofinder rooted tree and dispose of the orthofinder input files in tmp
 			cp ${TMP_PATH}/${NCBITAX}_orthofinder_results/Results_*/Species_Tree/SpeciesTree_rooted.txt ${OUTDIR}/${NCBITAX}_orthofinder_tree.nwk
 			INPUT_TREE="${OUTDIR}/${NCBITAX}_orthofinder_tree.nwk"
 			echo "--------------------------------------------------"
 			echo "The phylogenetic relationships of the genomes can be found in ${INPUT_TREE}"
-
-			# Compress the results and dispose of the Orthofinder directory in tmp
-			tar -czf ${TMP_PATH}/${NCBITAX}_orthofinder_results.tar.gz ${TMP_PATH}/${NCBITAX}_orthofinder_results/
-			rm -fr ${TMP_PATH}/orthofinder/ ${TMP_PATH}/${NCBITAX}_orthofinder_results/
-			echo "The raw OrthoFinder results can be found in ${TMP_PATH}/${NCBITAX}_orthofinder_results.tar.gz"
+			rm -fr ${TMP_PATH}/orthofinder/
+			echo "The raw OrthoFinder results can be found in ${TMP_PATH}/${NCBITAX}_orthofinder_results"
 
 		fi
 
@@ -454,13 +451,6 @@ elif [[ -f ${QUERY_FASTA} ]]; then
 		TARGET_GENOME=$(echo "${QUERY_FASTA##*/}" | cut -d. -f1)
 
 		tree2ncbitax -i ${INPUT_TREE} -g ${TARGET_GENOME} -t ${NCBITAX} -o ${TMP_PATH}/${TARGET_GENOME}.csv
-
-		# Create a genome ID for the taxonomy table
-		GENOMETAXID=$(awk -F "," -v TARGET_GENOME="$TARGET_GENOME" '{ if ($2 == TARGET_GENOME) print $1 }' ${TMP_PATH}/${TARGET_GENOME}.csv)
-
-		echo "--------------------------------------------------"
-		echo "The Taxonomy ID for the query genome is: ${GENOMETAXID}"
-		echo "Use this number instead of the NCBI Taxonomy ID if you plan to re-use the taxonomy table from STEP 2"
 
 		# Include the additional proteomes to the analysis
 
@@ -503,11 +493,7 @@ elif [[ -f ${QUERY_FASTA} ]]; then
 	cut -f 1,2,3 ${TMP_PATH}/tmp_${NCBITAX}_self_matches.bout > ${TMP_PATH}/tmp_${NCBITAX}.abc
 
 	# Add the self-matches to the homology table
-	if [[ -f ${STRAINS} ]]; then
-		awk -v GENOMETAXID="$GENOMETAXID" '{ print $0"\t"GENOMETAXID }' ${TMP_PATH}/tmp_${NCBITAX}_self_matches.bout > ${TMP_PATH}/${NCBITAX}_Diamond_results.bout
-	else
-		awk -v NCBITAX="$NCBITAX" '{ print $0"\t"NCBITAX }' ${TMP_PATH}/tmp_${NCBITAX}_self_matches.bout > ${TMP_PATH}/${NCBITAX}_Diamond_results.bout
-	fi
+	awk -v NCBITAX="$NCBITAX" '{ print $0"\t"NCBITAX }' ${TMP_PATH}/tmp_${NCBITAX}_self_matches.bout > ${TMP_PATH}/${NCBITAX}_Diamond_results.bout
 
 	# Remove temporary files
 	rm ${TMP_PATH}/tmp_selfmatch_db* ${TMP_PATH}/tmp_${NCBITAX}_self_matches.bout
@@ -1253,6 +1239,9 @@ else
 		# Replace the species-tailored taxonomy table with the additional infraspecies-level nodes
 		mv ${TMP_PATH}/tmp_${NCBITAX}_added_columns ${CUSTOMTAX}
 
+		# Remove the "${TARGET_GENOME}.csv" file from tmp
+		rm ${TMP_PATH}/${TARGET_GENOME}.csv
+
 	fi
 
 	if [ -s ${CUSTOMTAX} ]; then
@@ -1341,11 +1330,9 @@ if [ $THREADS -gt 1 ]; then
 	echo "Running Erassignment using ${THREADS} threads"
 
 	for SUBSCRIPT in $(ls ${TMP_PATH}/Erassignment_*); do
-		if [[ -f ${STRAINS} ]]; then
-			${SUBSCRIPT} ${DIAMONDOUT} ${CUSTOMTAX} ${GENOMETAXID} ${THRESHOLD} ${TMP_PATH} ${PRINTOLDEST} ${OUTDIR} ${DIVERGENCE} &
-		else
-			${SUBSCRIPT} ${DIAMONDOUT} ${CUSTOMTAX} ${NCBITAX} ${THRESHOLD} ${TMP_PATH} ${PRINTOLDEST} ${OUTDIR} ${DIVERGENCE} &
-		fi
+
+		${SUBSCRIPT} ${DIAMONDOUT} ${CUSTOMTAX} ${NCBITAX} ${THRESHOLD} ${TMP_PATH} ${PRINTOLDEST} ${OUTDIR} ${DIVERGENCE} &
+
 	done
 	wait
 	rm ${TMP_PATH}/Erassignment_*
@@ -1367,11 +1354,7 @@ else
 		echo -e "#qseqid\tsseqid\tevalue\tbitscore\tstaxids" > ${OUTDIR}/${NCBITAX}_deepest_homolog.tsv
 	fi
 
-	if [[ -f ${STRAINS} ]]; then
-		Erassignment ${DIAMONDOUT} ${CUSTOMTAX} ${GENOMETAXID} ${THRESHOLD} ${TMP_PATH} ${PRINTOLDEST} ${OUTDIR} ${DIVERGENCE}
-	else
-		Erassignment ${DIAMONDOUT} ${CUSTOMTAX} ${NCBITAX} ${THRESHOLD} ${TMP_PATH} ${PRINTOLDEST} ${OUTDIR} ${DIVERGENCE}
-	fi
+	Erassignment ${DIAMONDOUT} ${CUSTOMTAX} ${NCBITAX} ${THRESHOLD} ${TMP_PATH} ${PRINTOLDEST} ${OUTDIR} ${DIVERGENCE}
 
 fi
 
@@ -1406,11 +1389,9 @@ if [[ "${JACKHMMER}" = "true" && -f $QUERY_FASTA ]]; then
 		echo "Running Erassignment using ${THREADS} threads"
 
 		for SUBSCRIPT in $(ls ${TMP_PATH}/Erassignment_*); do
-			if [[ -f ${STRAINS} ]]; then
-				${SUBSCRIPT} ${DIAMONDOUT} ${CUSTOMTAX} ${GENOMETAXID} ${THRESHOLD} ${TMP_PATH} ${PRINTOLDEST} ${OUTDIR} ${DIVERGENCE} &
-			else
-				${SUBSCRIPT} ${DIAMONDOUT} ${CUSTOMTAX} ${NCBITAX} ${THRESHOLD} ${TMP_PATH} ${PRINTOLDEST} ${OUTDIR} ${DIVERGENCE} &
-			fi
+
+			${SUBSCRIPT} ${DIAMONDOUT} ${CUSTOMTAX} ${NCBITAX} ${THRESHOLD} ${TMP_PATH} ${PRINTOLDEST} ${OUTDIR} ${DIVERGENCE} &
+
 		done
 		wait
 
@@ -1431,11 +1412,7 @@ if [[ "${JACKHMMER}" = "true" && -f $QUERY_FASTA ]]; then
 			echo -e "#qseqid\tsseqid\tevalue\tbitscore\tstaxids" > ${OUTDIR}/${NCBITAX}_deepest_homolog.tsv
 		fi
 
-		if [[ -f ${STRAINS} ]]; then
-			Erassignment ${DIAMONDOUT} ${CUSTOMTAX} ${GENOMETAXID} ${THRESHOLD} ${TMP_PATH} ${PRINTOLDEST} ${OUTDIR} ${DIVERGENCE}
-		else
-			Erassignment ${DIAMONDOUT} ${CUSTOMTAX} ${NCBITAX} ${THRESHOLD} ${TMP_PATH} ${PRINTOLDEST} ${OUTDIR} ${DIVERGENCE}
-		fi
+		Erassignment ${DIAMONDOUT} ${CUSTOMTAX} ${NCBITAX} ${THRESHOLD} ${TMP_PATH} ${PRINTOLDEST} ${OUTDIR} ${DIVERGENCE}
 
 	fi
 
@@ -1450,11 +1427,7 @@ fi
 
 # Calculate the number of genes per phylostratum
 echo -e "#number_of_genes\tphylostratum\tphylorank" > ${OUTDIR}/${NCBITAX}_gene_age_summary.tsv
-if [[ -f ${STRAINS} ]]; then
-	QPHYLOS=$(awk -F "," -v GENOMETAXID="$GENOMETAXID" '{ if ($1 == GENOMETAXID) print $0 }' ${CUSTOMTAX})
-else
-	QPHYLOS=$(awk -F "," -v NCBITAX="$NCBITAX" '{ if ($1 == NCBITAX) print $0 }' ${CUSTOMTAX})
-fi
+QPHYLOS=$(awk -F "," -v NCBITAX="$NCBITAX" '{ if ($1 == NCBITAX) print $0 }' ${CUSTOMTAX})
 PHYLORANK=$(echo ${QPHYLOS} | sed "s/,/\n/g" | tail -n +2 | wc -l)
 IFS=$'\n'
 for STRATUM in $(echo ${QPHYLOS} | sed "s/,/\n/g" | tail -n +2); do
@@ -1504,11 +1477,7 @@ rm ${TMP_PATH}/tmp_${NCBITAX}.dump
 
 # Summarize the number of gene founder events per phylostratum
 echo -e "#number_of_founders\tphylostratum\tphylorank" > ${OUTDIR}/${NCBITAX}_founder_summary.tsv
-if [[ -f ${STRAINS} ]]; then
-	QPHYLOS=$(awk -F "," -v GENOMETAXID="$GENOMETAXID" '{ if ($1 == GENOMETAXID) print $0 }' ${CUSTOMTAX})
-else
-	QPHYLOS=$(awk -F "," -v NCBITAX="$NCBITAX" '{ if ($1 == NCBITAX) print $0 }' ${CUSTOMTAX})
-fi
+QPHYLOS=$(awk -F "," -v NCBITAX="$NCBITAX" '{ if ($1 == NCBITAX) print $0 }' ${CUSTOMTAX})
 PHYLORANK=$(echo ${QPHYLOS} | sed "s/,/\n/g" | tail -n +2 | wc -l)
 IFS=$'\n'
 for STRATUM in $(echo ${QPHYLOS} | sed "s/,/\n/g" | tail -n +2); do
@@ -1623,11 +1592,7 @@ if [[ -f ${DIVERGENCE} ]]; then
 	echo -e "#gene_family\tphylostratum\trank\tfamily_size" > ${OUTDIR}/${NCBITAX}_HDF_founder_events.tsv
 
 	# Extract the list of phylostrata in the query species
-	if [[ -f ${STRAINS} ]]; then
-		QPHYLOS=$(awk -F "," -v GENOMETAXID="$GENOMETAXID" '{ if ($1 == GENOMETAXID) print $0 }' ${CUSTOMTAX})
-	else
-		QPHYLOS=$(awk -F "," -v NCBITAX="$NCBITAX" '{ if ($1 == NCBITAX) print $0 }' ${CUSTOMTAX})
-	fi
+	QPHYLOS=$(awk -F "," -v NCBITAX="$NCBITAX" '{ if ($1 == NCBITAX) print $0 }' ${CUSTOMTAX})
 	PHYLORANK=$(echo ${QPHYLOS} | sed "s/,/\n/g" | tail -n +2 | wc -l)
 
 	# Print headers for the summary files

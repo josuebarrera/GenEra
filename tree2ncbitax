@@ -102,9 +102,9 @@ SORTED_TABLE$Genomes <- rownames(SORTED_TABLE)
 
 # Add a column with modified TAXIDs that will allow us to distinguish each genome in the tree from the rest of the NCBI taxonomy
 num_rows <- nrow(SORTED_TABLE)
-SORTED_TABLE$taxid_column <- paste(opt$taxid, 1:num_rows, sep = "_")
-rownames(SORTED_TABLE) <- NULL
-
+taxid_values <- paste(opt$taxid, 1:(num_rows-1), sep = "_")
+taxid_values <- c(opt$taxid, taxid_values)
+SORTED_TABLE$taxid_column <- taxid_values
 
 # Move the taxids and the genome names in the 1rst and 2nd columns of the dataframe
 FINAL_TABLE <- SORTED_TABLE[, c("taxid_column", "Genomes", names(SORTED_TABLE)[-c(ncol(SORTED_TABLE))])]
