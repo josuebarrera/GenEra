@@ -26,8 +26,8 @@ THRESHOLD=$4
 TMP_PATH=$5
 PRINTOLDEST=$6
 OUTDIR=$7
-DIVERGENCE=$8
-FAST_STEP3=$9
+FAST_STEP3=$8
+DIVERGENCE=$9
 
 # Extract the philostrata corresponding to the query organism
 QPHYLOS=$(awk -F "," -v QTAXID="$QTAXID" '{ if ($1 == QTAXID) print $0 }' ${NCBITAX})
