@@ -27,6 +27,7 @@ TMP_PATH=$5
 PRINTOLDEST=$6
 OUTDIR=$7
 DIVERGENCE=$8
+FAST_STEP3=$9
 
 # Extract the philostrata corresponding to the query organism
 QPHYLOS=$(awk -F "," -v QTAXID="$QTAXID" '{ if ($1 == QTAXID) print $0 }' ${NCBITAX})
@@ -40,8 +41,10 @@ PHYLONUM=$(echo $QPHYLOS | sed "s/,/\n/g" | wc -l)
 # FOR loop to calculate the corresponding phylostrata for each gene
 for GENE in $(cat ${TMP_PATH}/tmp_gene_list); do
 
-	# Generate a temporary file with the DIAMOND/MMseqs2 matches for the gene that is currently in the loop
-	grep "${GENE}" ${DIAMONDOUT} > ${TMP_PATH}/tmp_${GENE}.bout
+	if [[ "${FAST_STEP3}" = "false" ]]; then
+		# Generate a temporary file with the DIAMOND/MMseqs2 matches for the gene that is currently in the loop
+		grep "${GENE}" ${DIAMONDOUT} > ${TMP_PATH}/tmp_${GENE}.bout
+	fi
 
 	# Extract all the non-redundant taxids of the subject matches and extract their corresponding phylostrata. Limit the taxonomic search against sequences contained in the oldest phylostratum of the query organism
 	awk -v GENE="$GENE" '{ if ($1 == GENE) print $NF }' ${TMP_PATH}/tmp_${GENE}.bout | sort -u -T ${TMP_PATH} | sed '/^[[:space:]]*$/d' | awk -F "," 'FNR==NR{ a[$1]=$0;next } ($1 in a)' - ${NCBITAX} | grep "$OLDEST" > ${TMP_PATH}/tmp_phylostrata

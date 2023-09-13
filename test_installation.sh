@@ -36,6 +36,16 @@ if [[ -z ${PHYLOSCRIPT} ]]; then
 	exit 1
 fi
 
+F3R=$(which FASTSTEP3R)
+if [[ -z ${F3R} ]]; then
+	echo
+	echo "  ERROR: Please make sure that FASTSTEP3R script is located in your PATH"
+	echo
+	gzip test_DB.dmnd
+	rm -fr tmp_test
+	cd ../
+	exit 1
+fi
 
 if grep -q "YBR238C	XP_033764827.1	0.0	1350	27291" tmp_test/tmp_559292_*/559292_Diamond_results.bout; then
 	echo "STEP 1: PASSED"

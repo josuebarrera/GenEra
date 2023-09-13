@@ -1,0 +1,94 @@
+#!/usr/bin/env Rscript
+
+### FASTSTEP3R v1.0.0 (C) Max Planck Society for the Advancement of Science
+###
+### Code developed by Víctor Roces <https://github.com/RocesV/>
+###
+### This program is free software: you can redistribute it and/or modify
+### it under the terms of the GNU General Public License as published by
+### the Free Software Foundation, either version 3 of the License, or
+### (at your option) any later version.
+###
+### This program is distributed in the hope that it will be useful,
+### but WITHOUT ANY WARRANTY; without even the implied warranty of
+### MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+### GNU General Public License for more details.
+
+library(optparse)
+
+option_list = list(
+  make_option(c("-g", "--genelist"), type="character", default="tmp_gene_list", 
+              help="Name of input tmp_genelist [default= %default]", metavar="file"),
+  make_option(c("-t", "--tmp"), type="character", default=NULL, 
+              help="${TMP_PATH} directory to import and export results", metavar="path"),
+  make_option(c("-p", "--pattern"), type = "character", default="Diamond_F3R_", 
+              help="Default pattern used to search ${DIAMONDOUT} splitted files in tmp directory [default= %default]", metavar="string"),
+  make_option(c("-c", "--cores"), type="integer", default=NULL, 
+              help="Number of threads ", metavar="NUM")
+);
+
+opt_parser = OptionParser(option_list=option_list);
+opt = parse_args(opt_parser);
+
+if (is.null(opt$tmp)){
+  message ("")
+  message ("FASTSTEP3R: STEP 3 gene queries data.table implementation for GenEra")
+  message ("Generate per gene .bout files")
+  message ("This script is meant to be used as a replace of the grep command in the Erassignment script at the cost of more RAM and simultaneous tmp files")
+  message ("")
+  print_help(opt_parser)
+  stop("The ${TMP_PATH} directory must be supplied", call.=FALSE)
+}
+
+if (is.null(opt$cores)){
+  message ("")
+  message ("FASTSTEP3R: STEP 3 gene queries data.table implementation for GenEra")
+  message ("Generate per gene .bout files")
+  message ("This script is meant to be used as a replace of the grep command in the Erassignment script at the cost of more RAM and simultaneous tmp files")
+  message ("")
+  print_help(opt_parser)
+  stop("The ${THREADS} number must be supplied", call.=FALSE)
+}
+
+library(data.table)
+
+# set the number of threads
+
+setDTthreads(opt$cores)
+
+# Import and indexing inputs
+
+cat(paste0("--------------------------------------------------"), "\n")
+cat(paste0("Importing and indexing files needed... | ", date(), "\n"))
+
+## Import tmp_gene_list
+
+tmp.genelist <- fread(paste0(opt$tmp,"/tmp_gene_list"),header = F)
+
+## Import ${DIAMONDOUT} splitted files and indexing for fast queries
+
+Diamond.results <- list()
+Split.files <- paste0(opt$tmp,"/",list.files(opt$tmp)[grep(opt$pattern, list.files(opt$tmp))]) 
+for(i in 1:length(Split.files)){
+    Diamond.results[[i]] <- fread(Split.files[i], header = F)
+    setkey(Diamond.results[[i]], V1, verbose = FALSE)
+}
+
+# Filtering and writting
+
+cat(paste0("--------------------------------------------------"), "\n")
+cat(paste0("Filtering and exporting single gen hits ... | ", date(), "\n"))
+
+for(i in tmp.genelist$V1){
+    hits <- list()
+    for(j in 1:length(Diamond.results)){
+        hits[[j]] <- Diamond.results[[j]][V1 == i]
+    }
+    fwrite(rbindlist(hits, use.names = FALSE), file = paste0(opt$tmp, "/tmp_", i, ".bout"), sep = "\t", row.names = F, col.names = F, quote = F)
+}
+
+# Print goodbye message
+
+cat(paste0("ANALYSIS COMPLETE !!! | ", date(), "\n"))
+cat(paste0("Feed all these tmp files to Erassignment for saving a lot of time in STEP 3"), "\n")
+cat(paste0("Thanks for using FASTSTEP3R"), "\n")
