@@ -10,7 +10,7 @@ genEra -q test_seqs.fasta \
  -d test_taxdump \
  -r test_ncbi_lineages.csv \
  -n 1 -x tmp_test \
- -s test_distances.tsv -i true > log
+ -s test_distances.tsv -i true -F true > log
 
 WARNINGTEST=0
 
