@@ -14,7 +14,7 @@
 ### MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ### GNU General Public License for more details.
 
-# USAGE: Erassignment [DIAMOND/BLAST results with the query sequence in the first column and the NCBI taxids in the last column] [modified "ncbi_lineages" file generated from ncbitax2lin] [taxid of query species] [percentage threshold of incomplete phylostrata] [/path/to/tmp_files] [boolean to print the deepest homolog for each gene] [/path/to/output_files] [boolean to FAST_STEP3 implementation] [oprional table with NCBI taxonomy IDs and evolutionary distances for abSENSE]
+# USAGE: Erassignment [DIAMOND/BLAST results with the query sequence in the first column and the NCBI taxids in the last column] [modified "ncbi_lineages" file generated from ncbitax2lin] [taxid of query species] [percentage threshold of incomplete phylostrata] [/path/to/tmp_files] [boolean to print the deepest homolog for each gene] [/path/to/output_files] [boolean to FAST_STEP3 implementation] [optional table with NCBI taxonomy IDs and evolutionary distances for abSENSE]
 # Example: Erassignment Diamond_results.txt ncbi_lineages_2021-10-26.csv 7227 30 /path/to/tmp true /path/to/output false evolutionary_distances.tsv
 
 ### IMPORTANT NOTE: the "ncbi_lineages" file should be arranged so that the taxid is in the first column and all the phylostrata of interest are organized from the species level all the way back to LUCA
