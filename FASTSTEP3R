@@ -63,14 +63,14 @@ cat(paste0("Importing and indexing files needed... | ", date(), "\n"))
 
 ## Import tmp_gene_list
 
-tmp.genelist <- fread(paste0(opt$tmp,"/tmp_gene_list"),header = F)
+tmp.genelist <- fread(paste0(opt$tmp,"/tmp_gene_list"), header = F, sep = "\t")
 
 ## Import ${DIAMONDOUT} splitted files and indexing for fast queries
 
 Diamond.results <- list()
 Split.files <- paste0(opt$tmp,"/",list.files(opt$tmp)[grep(opt$pattern, list.files(opt$tmp))]) 
 for(i in 1:length(Split.files)){
-    Diamond.results[[i]] <- fread(Split.files[i], header = F)
+    Diamond.results[[i]] <- fread(Split.files[i], header = F, sep = "\t")
     setkey(Diamond.results[[i]], V1, verbose = FALSE)
 }
 
