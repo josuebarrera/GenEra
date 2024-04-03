@@ -1,6 +1,6 @@
 #!/bin/bash
 
-### genEra v1.4.0 (C) Max Planck Society for the Advancement of Science
+### genEra v1.4.1 (C) Max Planck Society for the Advancement of Science
 ###
 ### Code developed by Josue Barrera-Redondo <josue.barrera@tuebingen.mpg.de>
 ###
@@ -14,7 +14,7 @@
 ### MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ### GNU General Public License for more details.
 
-VERSION='1.4.0'
+VERSION='1.4.1'
 
 QUERY_FASTA=''
 QUERY_PDB=''
