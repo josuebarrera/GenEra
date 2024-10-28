@@ -1,6 +1,39 @@
 #!/bin/bash
 
-cd test_files
+
+#!/bin/bash
+
+# Initialize variable for directory path
+input_dir=""
+
+# Parse command-line options
+while getopts ":i:" opt; do
+  case $opt in
+    i)
+      input_dir="$OPTARG" # Get the directory path from the -i flag
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+    :)
+      echo "Option -$OPTARG requires an argument." >&2
+      exit 1
+      ;;
+  esac
+done
+
+# Check if the directory exists
+if [ -d "$input_dir" ]; then
+  echo "Entering directory: $input_dir"
+  cd "$input_dir" || exit
+else
+  echo "Error: Directory $input_dir does not exist."
+  exit 1
+fi
+
+
+#cd test_files
 mkdir tmp_test
 
 gunzip test_DB.dmnd.gz
