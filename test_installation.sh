@@ -177,8 +177,9 @@ fi
 
 cd ../
 
-exit 0
-
 # Return to the original directory
 cd "$original_dir" || exit
 echo "Returned to original directory: $original_dir"
+
+exit 0
+
