@@ -1,6 +1,63 @@
 #!/bin/bash
 
-cd test_files
+
+
+# Save the current directory
+original_dir=$(pwd)
+
+# Display usage/help information
+show_help() {
+  echo "Usage: $0 -i <directory>"
+  echo ""
+  echo "Options:"
+  echo "  -i <directory>   Specify the directory to enter."
+  echo "  -h               Display this help message."
+}
+
+# Initialize variable for directory path
+input_dir=""
+
+# Parse command-line options
+while getopts ":i:h" opt; do
+  case $opt in
+    i)
+      input_dir="$OPTARG" # Get the directory path from the -i flag
+      ;;
+    h)
+      show_help
+      exit 0
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      show_help
+      exit 1
+      ;;
+    :)
+      echo "Option -$OPTARG requires an argument." >&2
+      show_help
+      exit 1
+      ;;
+  esac
+done
+
+# Check if the directory was provided and exists
+if [ -z "$input_dir" ]; then
+  echo "Error: Directory not specified."
+  show_help
+  exit 1
+fi
+
+if [ -d "$input_dir" ]; then
+  echo "Entering directory: $input_dir"
+  cd "$input_dir" || exit
+  # Perform actions in the specified directory here
+else
+  echo "Error: Directory $input_dir does not exist."
+  exit 1
+fi
+
+
+#cd test_files
 mkdir tmp_test
 
 gunzip test_DB.dmnd.gz
@@ -120,4 +177,9 @@ fi
 
 cd ../
 
+# Return to the original directory
+cd "$original_dir" || exit
+echo "Returned to original directory: $original_dir"
+
 exit 0
+
