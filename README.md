@@ -6,6 +6,7 @@
 ![Visitors](https://api.visitorbadge.io/api/visitors?path=https%3A%2F%2Fgithub.com%2Fjosuebarrera%2FGenEra&label=VISITORS&countColor=%23263759&style=flat)
 
 ![GenEra](https://github.com/josuebarrera/GenEra/blob/main/logo.png)
+[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](https://anaconda.org/bioconda/genera) [![Downloads](https://anaconda.org/bioconda/genera/badges/downloads.svg)](https://anaconda.org/bioconda/tipp)
 
 Introduction
 ============
