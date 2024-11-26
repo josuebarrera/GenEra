@@ -4,6 +4,7 @@
 [![DOI](https://zenodo.org/badge/483209866.svg)](https://zenodo.org/badge/latestdoi/483209866)
 [![Paper link](https://img.shields.io/badge/Published_in-Genome_Biology-badge?labelColor=%23CBE059&color=%231D3050)](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-023-02895-z)
 ![Visitors](https://api.visitorbadge.io/api/visitors?path=https%3A%2F%2Fgithub.com%2Fjosuebarrera%2FGenEra&label=VISITORS&countColor=%23263759&style=flat)
+[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](https://anaconda.org/bioconda/genera) [![Downloads](https://anaconda.org/bioconda/genera/badges/downloads.svg)](https://anaconda.org/bioconda/tipp)
 
 ![GenEra](https://github.com/josuebarrera/GenEra/blob/main/logo.png)
 
