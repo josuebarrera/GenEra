@@ -19,7 +19,7 @@ requirements:
     - python >=3.8,<3.9
   run:
     - python >=3.8,<3.9
-    - diamond >=2.1.10
+    - diamond >=2.1.14
     - mmseqs2 >=14.7e284
     - foldseek >=3.915ef7d
     - scipy >=1.7.3
