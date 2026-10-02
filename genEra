@@ -1,6 +1,6 @@
 #!/bin/bash
 
-### genEra v1.4.2 (C) Max Planck Society for the Advancement of Science
+### genEra v1.4.3 (C) Max Planck Society for the Advancement of Science
 ###
 ### Code developed by Josue Barrera-Redondo <josue.barrera@tuebingen.mpg.de>
 ###
@@ -14,7 +14,7 @@
 ### MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ### GNU General Public License for more details.
 
-VERSION='1.4.2'
+VERSION='1.4.3'
 
 QUERY_FASTA=''
 QUERY_PDB=''
@@ -378,10 +378,10 @@ if [ -n "$DIAMONDOUT" ]; then
 	fi
 elif [[ -f ${QUERY_FASTA} ]]; then
 
-	if [[ ! -f ${NR_DB}.dmnd ]]; then
+	if [[ ! -f "${NR_DB}.pal" && ! -f "${NR_DB}.dmnd" ]]; then
 		echo
 		echo "  ERROR: genEra could not find the locally installed database for DIAMOND:"
-		echo "  ${NR_DB}.dmnd"
+		echo "  ${NR_DB}"
 		echo "  Please refer to the manual for information on how to generate such database"
 		echo "  Exiting"
 		exit 1
