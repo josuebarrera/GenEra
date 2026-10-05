@@ -1736,9 +1736,9 @@ if [[ -f ${DIVERGENCE} ]]; then
 	PHYLORANK=$(echo ${QPHYLOS} | sed "s/,/\n/g" | tail -n +2 | wc -l)
 	IFS=$'\n'
 	for STRATUM in $(echo ${QPHYLOS} | sed "s/,/\n/g" | tail -n +2); do
-			NUMGENES=$(awk -F "\t" -v STRATUM="$STRATUM" '{ if ($2 == STRATUM) print $0 }' ${OUTDIR}/${NCBITAX}_HDF_founder-corrected_gene_ages.tsv | wc -l)
-			echo -e "${NUMGENES}\t${STRATUM}\t${PHYLORANK}" >> ${OUTDIR}/${NCBITAX}_HDF_founder-corrected_gene_age_summary.tsv
-    		let PHYLORANK-=1
+		NUMGENES=$(awk -F "\t" -v STRATUM="$STRATUM" '{ if ($2 == STRATUM) print $0 }' ${OUTDIR}/${NCBITAX}_HDF_founder-corrected_gene_ages.tsv | wc -l)
+		echo -e "${NUMGENES}\t${STRATUM}\t${PHYLORANK}" >> ${OUTDIR}/${NCBITAX}_HDF_founder-corrected_gene_age_summary.tsv
+		let PHYLORANK-=1
 	done
 
 	echo "--------------------------------------------------"
