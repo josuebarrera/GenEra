@@ -1,6 +1,6 @@
 #!/bin/bash
 
-### genEra v1.4.3 (C) Max Planck Society for the Advancement of Science
+### genEra v1.4.4 (C) Max Planck Society for the Advancement of Science
 ###
 ### Code developed by Josue Barrera-Redondo <josue.barrera@tuebingen.mpg.de>
 ###
@@ -14,7 +14,7 @@
 ### MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ### GNU General Public License for more details.
 
-VERSION='1.4.3'
+VERSION='1.4.4'
 
 QUERY_FASTA=''
 QUERY_PDB=''
@@ -1527,6 +1527,28 @@ for STRATUM in $(echo ${QPHYLOS} | sed "s/,/\n/g" | tail -n +2); do
 	let PHYLORANK-=1
 done
 
+# Obtain the founder-corrected gene ages
+grep "#" ${NCBITAX}_founder_events.tsv | sed 's/_family//g' | awk -F "\t" '{ print $1"\t"$2"\t"$3 }' > ${NCBITAX}_founder-corrected_>
+grep -v "#" ${NCBITAX}_founder_events.tsv | awk -F'\t' 'BEGIN{OFS="\t"}
+{
+    n = split($1, genes, ",")
+
+    for (i = 1; i <= n; i++) {
+		print genes[i], $2, $3
+	}
+}' | sort >> ${NCBITAX}_founder-corrected_gene_ages.tsv
+
+# Calculate the number of founder-corrected genes per phylostratum
+echo -e "#number_of_genes\tphylostratum\tphylorank" > ${OUTDIR}/${NCBITAX}_founder-corrected_gene_age_summary.tsv
+QPHYLOS=$(awk -F "," -v NCBITAX="$NCBITAX" '{ if ($1 == NCBITAX) print $0 }' ${CUSTOMTAX})
+PHYLORANK=$(echo ${QPHYLOS} | sed "s/,/\n/g" | tail -n +2 | wc -l)
+IFS=$'\n'
+for STRATUM in $(echo ${QPHYLOS} | sed "s/,/\n/g" | tail -n +2); do
+		NUMGENES=$(awk -F "\t" -v STRATUM="$STRATUM" '{ if ($2 == STRATUM) print $0 }' ${OUTDIR}/${NCBITAX}_founder-corrected_gene_a>
+		echo -e "${NUMGENES}\t${STRATUM}\t${PHYLORANK}" >> ${OUTDIR}/${NCBITAX}_founder-corrected_gene_age_summary.tsv
+	let PHYLORANK-=1
+done
+
 echo "--------------------------------------------------"
 echo "Step 3 finished!"
 echo "The age assignment for your individual genes can be found in ${OUTDIR}/${NCBITAX}_gene_ages.tsv"
@@ -1537,6 +1559,8 @@ echo "The possible ages for the genes with a taxonomic representativeness below 
 echo "The estimation of gene family founder events can be found in ${OUTDIR}/${NCBITAX}_founder_events.tsv"
 echo "The number of individual genes that could be assigned to each phylostratum are summarized in ${OUTDIR}/${NCBITAX}_gene_age_summary.tsv"
 echo "The number of of gene family founder events per phylostratum are summarized in ${OUTDIR}/${NCBITAX}_founder_summary.tsv"
+echo "The individual gene ages adjusted by the age of their founder events can be found in ${OUTDIR}/${NCBITAX}_founder-corrected_gene_ages.tsv"
+echo "The number of founder-corrected gene ages per phylostratum are summarized in ${OUTDIR}/${NCBITAX}_founder-corrected_gene_age_summary.tsv"
 
 #######################################################
 ###                 GenEra: STEP 4                  ###
@@ -1695,12 +1719,35 @@ if [[ -f ${DIVERGENCE} ]]; then
 	rm ${TMP_PATH}/tmp_taxa_distances
 	mv ${OUTDIR}/${NCBITAX}_bitscores.tsv ${OUTDIR}/${NCBITAX}_abSENSE_results/
 
+    # Obtain the founder-corrected ages for the genes that passed the HDF test
+    grep "#" ${NCBITAX}_HDF_founder_events.tsv | sed 's/_family//g' | awk -F "\t" '{ print $1"\t"$2"\t"$3 }' > ${NCBITAX}_HDF_founder-corrected_gene_ages.tsv
+    grep -v "#" ${NCBITAX}_HDF_founder_events.tsv | awk -F'\t' 'BEGIN{OFS="\t"}
+    {
+        n = split($1, genes, ",")
+
+        for (i = 1; i <= n; i++) {
+            print genes[i], $2, $3
+        }
+    }' | sort >> ${NCBITAX}_HDF_founder-corrected_gene_ages.tsv
+
+    # Calculate the number of founder-corrected genes that passed the HDF test
+    echo -e "#number_of_genes\tphylostratum\tphylorank" > ${OUTDIR}/${NCBITAX}_HDF_founder-corrected_gene_age_summary.tsv
+    QPHYLOS=$(awk -F "," -v NCBITAX="$NCBITAX" '{ if ($1 == NCBITAX) print $0 }' ${CUSTOMTAX})
+    PHYLORANK=$(echo ${QPHYLOS} | sed "s/,/\n/g" | tail -n +2 | wc -l)
+    IFS=$'\n'
+    for STRATUM in $(echo ${QPHYLOS} | sed "s/,/\n/g" | tail -n +2); do
+            NUMGENES=$(awk -F "\t" -v STRATUM="$STRATUM" '{ if ($2 == STRATUM) print $0 }' ${OUTDIR}/${NCBITAX}_HDF_founder-corrected_gene_ages.tsv
+			echo -e "${NUMGENES}\t${STRATUM}\t${PHYLORANK}" >> ${OUTDIR}/${NCBITAX}_HDF_founder-corrected_gene_age_summary.tsv
+            let PHYLORANK-=1
+    done
+
 	echo "--------------------------------------------------"
 	echo "Step 4 finished!"
 	echo "The detection failure probabilities for each for your genes can be found in ${OUTDIR}/${NCBITAX}_abSENSE_results/Detection_failure_probabilities"
 	echo "The list of gene age assignments that cannot be explained by homology detection failure can be found in ${OUTDIR}/${NCBITAX}_HDF_gene_ages.tsv"
 	echo "The list of gene-family founder events that cannot be explained by homology detection failure can be found in ${OUTDIR}/${NCBITAX}_HDF_founder_events.tsv"
-	echo "The summary files for this analysis are found in ${OUTDIR}/${NCBITAX}_HDF_gene_age_summary.tsv and ${OUTDIR}/${NCBITAX}_HDF_founder_summary.tsv"
+	echo "the list of founder-corrected gene ages that passed the homology detection failure test can be found in ${OUTDIR}/${NCBITAX}_HDF_founder-corrected_gene_ages.tsv"
+	echo "The summary files for this analysis are found in ${OUTDIR}/${NCBITAX}_HDF_gene_age_summary.tsv, ${OUTDIR}/${NCBITAX}_HDF_founder_summary.tsv and ${OUTDIR}/${NCBITAX}_HDF_founder-corrected_gene_age_summary.tsv"
 	echo "Please refer to the following paper for an in-depth interpretation of homology detection failure probabilities:"
 	echo "Weisman, C.M., Murray, A.W., & Eddy, S.R. (2020). Many, but not all, lineage-specific genes can be explained by homology detection failure. PLoS biology, 18(11), e3000862."
 
