@@ -1544,7 +1544,7 @@ QPHYLOS=$(awk -F "," -v NCBITAX="$NCBITAX" '{ if ($1 == NCBITAX) print $0 }' ${C
 PHYLORANK=$(echo ${QPHYLOS} | sed "s/,/\n/g" | tail -n +2 | wc -l)
 IFS=$'\n'
 for STRATUM in $(echo ${QPHYLOS} | sed "s/,/\n/g" | tail -n +2); do
-		NUMGENES=$(awk -F "\t" -v STRATUM="$STRATUM" '{ if ($2 == STRATUM) print $0 }' ${OUTDIR}/${NCBITAX}_founder-corrected_gene_ages.tsv
+		NUMGENES=$(awk -F "\t" -v STRATUM="$STRATUM" '{ if ($2 == STRATUM) print $0 }' ${OUTDIR}/${NCBITAX}_founder-corrected_gene_ages.tsv | wc -l)
 		echo -e "${NUMGENES}\t${STRATUM}\t${PHYLORANK}" >> ${OUTDIR}/${NCBITAX}_founder-corrected_gene_age_summary.tsv
 	let PHYLORANK-=1
 done
