@@ -378,7 +378,7 @@ if [ -n "$DIAMONDOUT" ]; then
 	fi
 elif [[ -f ${QUERY_FASTA} ]]; then
 
-	if [[ ! -f "${NR_DB}.pal" && ! -f "${NR_DB}.dmnd" ]]; then
+	if [[ ! -f "${NR_DB}.pdb" && ! -f "${NR_DB}.dmnd" ]]; then
 		echo
 		echo "  ERROR: genEra could not find the locally installed database for DIAMOND:"
 		echo "  ${NR_DB}"
